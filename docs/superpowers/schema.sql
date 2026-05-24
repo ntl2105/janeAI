@@ -1,3 +1,6 @@
+-- NOTE: The jd_history table already exists in the database.
+-- Run this script only to add the questionnaire tables.
+
 create table questionnaires (
   id uuid primary key default gen_random_uuid(),
   jd_history_id uuid references jd_history(id) on delete cascade,
@@ -11,7 +14,9 @@ create table questionnaires (
 
 create table questionnaire_answers (
   id uuid primary key default gen_random_uuid(),
-  questionnaire_id uuid references questionnaires(id) on delete cascade,
+  questionnaire_id uuid unique references questionnaires(id) on delete cascade,
   answers jsonb not null default '{}',
   submitted_at timestamptz default now()
 );
+
+create index idx_qa_questionnaire_id on questionnaire_answers(questionnaire_id);
