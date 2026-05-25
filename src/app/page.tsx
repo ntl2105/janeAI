@@ -19,6 +19,9 @@ export default function Home() {
   const [generatingQ, setGeneratingQ] = useState(false)
   const [refining, setRefining] = useState(false)
   const [currentJdHistoryId, setCurrentJdHistoryId] = useState<string | null>(null)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [notAnsweredYet, setNotAnsweredYet] = useState(false)
 
   useEffect(() => {
     fetchHistory()
@@ -105,9 +108,16 @@ export default function Home() {
 
   async function handleCheckAnswers() {
     if (!questionnaireId) return
+    setChecking(true)
+    setNotAnsweredYet(false)
     const res = await fetch(`/api/questionnaire/${questionnaireId}/answers`)
     const data = await res.json()
-    if (data.answers) setAnswers(data.answers)
+    if (data.answers) {
+      setAnswers(data.answers)
+    } else {
+      setNotAnsweredYet(true)
+    }
+    setChecking(false)
   }
 
   async function handleRefineJd() {
@@ -321,19 +331,31 @@ export default function Home() {
                         Link: /q/{questionnaireToken}
                       </span>
                       <button
-                        onClick={() => navigator.clipboard.writeText(`${window.location.origin}/q/${questionnaireToken}`)}
-                        className="text-xs text-indigo-600 font-medium whitespace-nowrap"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/q/${questionnaireToken}`)
+                          setCopiedLink(true)
+                          setTimeout(() => setCopiedLink(false), 2000)
+                        }}
+                        className={`text-xs font-medium whitespace-nowrap transition-colors ${copiedLink ? 'text-green-600' : 'text-indigo-600'}`}
                       >
-                        Copy link
+                        {copiedLink ? '✓ Đã copy!' : 'Copy link'}
                       </button>
                     </div>
                     {!answers ? (
-                      <button
-                        onClick={handleCheckAnswers}
-                        className="w-full border border-indigo-200 text-indigo-600 rounded-xl py-2 text-sm hover:bg-indigo-50 transition-colors"
-                      >
-                        Kiểm tra sếp đã điền chưa
-                      </button>
+                      <>
+                        <button
+                          onClick={handleCheckAnswers}
+                          disabled={checking}
+                          className="w-full border border-indigo-200 text-indigo-600 rounded-xl py-2 text-sm hover:bg-indigo-50 transition-colors disabled:opacity-60"
+                        >
+                          {checking ? 'Đang kiểm tra...' : 'Kiểm tra sếp đã điền chưa'}
+                        </button>
+                        {notAnsweredYet && (
+                          <p className="text-xs text-center text-amber-600 bg-amber-50 rounded-lg py-1.5">
+                            Sếp chưa điền, gửi link nhắc sếp nhé 😅
+                          </p>
+                        )}
+                      </>
                     ) : (
                       <button
                         onClick={handleRefineJd}
