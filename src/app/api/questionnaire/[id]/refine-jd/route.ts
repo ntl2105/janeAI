@@ -46,7 +46,17 @@ export async function POST(
   const questionsText = (q.questions as Array<{ id: string; text: string }>)
     .map((q) => {
       const answer = (ans.answers as Record<string, unknown>)[q.id]
-      return `Q: ${q.text}\nA: ${Array.isArray(answer) ? answer.join(', ') : answer ?? '(không trả lời)'}`
+      let formatted: string
+      if (Array.isArray(answer)) {
+        formatted = answer
+          .map((a) => (typeof a === 'object' && a !== null && 'skill' in a)
+            ? `${(a as {skill: string; level: string}).skill} (${(a as {skill: string; level: string}).level})`
+            : String(a))
+          .join(', ')
+      } else {
+        formatted = answer != null ? String(answer) : '(không trả lời)'
+      }
+      return `Q: ${q.text}\nA: ${formatted}`
     })
     .join('\n\n')
 
@@ -82,7 +92,8 @@ Trả về JSON:
   })
 
   const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
-  const result = JSON.parse(raw) as { refinedJd: string; changes: string[] }
+  const cleanRaw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  const result = JSON.parse(cleanRaw) as { refinedJd: string; changes: string[] }
 
   return NextResponse.json(result)
 }
