@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getSupabase } from '@/lib/supabase'
 
-const client = new Anthropic()
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +53,7 @@ Viết tự nhiên, chuyên nghiệp, hấp dẫn ứng viên. Không bịa thô
         generated_jd: generatedJd,
       })
       .select('id')
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error('Supabase error:', error)

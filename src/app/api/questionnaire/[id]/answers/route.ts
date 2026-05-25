@@ -9,7 +9,8 @@ export async function GET(
 ) {
   const { id } = await params
 
-  const { data: q, error: qError } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: q, error: qError } = await (getSupabase() as any)
     .from('questionnaires')
     .select('id, questions, prefilled_answers, status, jd_history_id')
     .eq('id', id)
@@ -19,7 +20,8 @@ export async function GET(
     return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 })
   }
 
-  const { data: ans } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: ans } = await (getSupabase() as any)
     .from('questionnaire_answers')
     .select('answers, submitted_at')
     .eq('questionnaire_id', id)

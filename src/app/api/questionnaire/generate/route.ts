@@ -5,7 +5,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getSupabase } from '@/lib/supabase'
 import { Question } from '@/lib/supabase'
 
-const client = new Anthropic()
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {

@@ -9,7 +9,8 @@ export async function GET(
 ) {
   const { token } = await params
 
-  const { data, error } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (getSupabase() as any)
     .from('questionnaires')
     .select('id, questions, prefilled_answers, status, expires_at')
     .eq('token', token)

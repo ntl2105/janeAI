@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getSupabase } from '@/lib/supabase'
 
-const client = new Anthropic()
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(
   _req: NextRequest,
@@ -12,7 +12,8 @@ export async function POST(
 ) {
   const { id } = await params
 
-  const { data: q, error: qError } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: q, error: qError } = await (getSupabase() as any)
     .from('questionnaires')
     .select('jd_history_id, questions')
     .eq('id', id)
@@ -22,13 +23,15 @@ export async function POST(
     return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 })
   }
 
-  const { data: jd } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: jd } = await (getSupabase() as any)
     .from('jd_history')
     .select('job_title, generated_jd')
     .eq('id', q.jd_history_id)
     .single()
 
-  const { data: ans } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: ans } = await (getSupabase() as any)
     .from('questionnaire_answers')
     .select('answers')
     .eq('questionnaire_id', id)

@@ -14,7 +14,8 @@ export async function POST(
     return NextResponse.json({ error: 'Thiếu câu trả lời' }, { status: 400 })
   }
 
-  const { data: q, error: fetchError } = await getSupabase()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: q, error: fetchError } = await (getSupabase() as any)
     .from('questionnaires')
     .select('id, status, expires_at')
     .eq('token', token)
@@ -34,7 +35,8 @@ export async function POST(
 
   const supabase = getSupabase()
 
-  const { error: insertError } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: insertError } = await (supabase as any)
     .from('questionnaire_answers')
     .insert({ questionnaire_id: q.id, answers })
 
@@ -42,7 +44,8 @@ export async function POST(
     return NextResponse.json({ error: 'Lỗi lưu câu trả lời' }, { status: 500 })
   }
 
-  await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
     .from('questionnaires')
     .update({ status: 'answered' })
     .eq('id', q.id)

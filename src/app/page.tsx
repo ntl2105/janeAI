@@ -206,7 +206,7 @@ export default function Home() {
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="VD: Senior Frontend Developer, Marketing Manager..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -219,7 +219,7 @@ export default function Home() {
                 onChange={(e) => setRawInput(e.target.value)}
                 placeholder={'Paste yêu cầu từ khách hàng vào đây. VD:\n- 3 năm kinh nghiệm React\n- Tiếng Anh tốt\n- Lương 2000-3000 USD\n- Remote 100%\n- Startup fintech, team 50 người...'}
                 rows={10}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
               />
             </div>
 
