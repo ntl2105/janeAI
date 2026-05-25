@@ -10,63 +10,71 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  try {
+    const { id } = await params
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: q, error: qError } = await (getSupabase() as any)
-    .from('questionnaires')
-    .select('jd_history_id, questions')
-    .eq('id', id)
-    .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: q, error: qError } = await (getSupabase() as any)
+      .from('questionnaires')
+      .select('jd_history_id, questions')
+      .eq('id', id)
+      .single()
 
-  if (qError || !q) {
-    return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 })
-  }
+    if (qError || !q) {
+      console.error('Questionnaire not found:', qError)
+      return NextResponse.json({ error: 'Không tìm thấy bảng hỏi' }, { status: 404 })
+    }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: jd } = await (getSupabase() as any)
-    .from('jd_history')
-    .select('job_title, generated_jd')
-    .eq('id', q.jd_history_id)
-    .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: jd, error: jdError } = await (getSupabase() as any)
+      .from('jd_history')
+      .select('job_title, generated_jd')
+      .eq('id', q.jd_history_id)
+      .single()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: ans } = await (getSupabase() as any)
-    .from('questionnaire_answers')
-    .select('answers')
-    .eq('questionnaire_id', id)
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .single()
+    if (jdError || !jd) {
+      console.error('JD not found:', jdError)
+      return NextResponse.json({ error: 'Không tìm thấy JD gốc' }, { status: 404 })
+    }
 
-  if (!jd || !ans) {
-    return NextResponse.json({ error: 'Thiếu dữ liệu để tinh chỉnh' }, { status: 400 })
-  }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: ans, error: ansError } = await (getSupabase() as any)
+      .from('questionnaire_answers')
+      .select('answers')
+      .eq('questionnaire_id', id)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .single()
 
-  const questionsText = (q.questions as Array<{ id: string; text: string }>)
-    .map((q) => {
-      const answer = (ans.answers as Record<string, unknown>)[q.id]
-      let formatted: string
-      if (Array.isArray(answer)) {
-        formatted = answer
-          .map((a) => (typeof a === 'object' && a !== null && 'skill' in a)
-            ? `${(a as {skill: string; level: string}).skill} (${(a as {skill: string; level: string}).level})`
-            : String(a))
-          .join(', ')
-      } else {
-        formatted = answer != null ? String(answer) : '(không trả lời)'
-      }
-      return `Q: ${q.text}\nA: ${formatted}`
-    })
-    .join('\n\n')
+    if (ansError || !ans) {
+      console.error('Answers not found:', ansError)
+      return NextResponse.json({ error: 'Chưa có câu trả lời từ sếp' }, { status: 400 })
+    }
 
-  const message = await client.messages.create({
-    model: 'claude-opus-4-7',
-    max_tokens: 2500,
-    messages: [
-      {
-        role: 'user',
-        content: `Bạn là chuyên gia viết JD. Dựa trên JD gốc và câu trả lời của hiring manager, hãy tinh chỉnh lại JD cho chính xác hơn.
+    const questionsText = (q.questions as Array<{ id: string; text: string }>)
+      .map((q) => {
+        const answer = (ans.answers as Record<string, unknown>)[q.id]
+        let formatted: string
+        if (Array.isArray(answer)) {
+          formatted = answer
+            .map((a) => (typeof a === 'object' && a !== null && 'skill' in a)
+              ? `${(a as { skill: string; level: string }).skill} (${(a as { skill: string; level: string }).level})`
+              : String(a))
+            .join(', ')
+        } else {
+          formatted = answer != null ? String(answer) : '(không trả lời)'
+        }
+        return `Q: ${q.text}\nA: ${formatted}`
+      })
+      .join('\n\n')
+
+    const message = await client.messages.create({
+      model: 'claude-opus-4-7',
+      max_tokens: 2500,
+      messages: [
+        {
+          role: 'user',
+          content: `Bạn là chuyên gia viết JD. Dựa trên JD gốc và câu trả lời của hiring manager, hãy tinh chỉnh lại JD cho chính xác hơn.
 
 **JD gốc (${jd.job_title}):**
 ${jd.generated_jd}
@@ -87,13 +95,17 @@ Trả về JSON:
     "Thêm thông tin về tech stack..."
   ]
 }`,
-      },
-    ],
-  })
+        },
+      ],
+    })
 
-  const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
-  const cleanRaw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-  const result = JSON.parse(cleanRaw) as { refinedJd: string; changes: string[] }
+    const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
+    const cleanRaw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    const result = JSON.parse(cleanRaw) as { refinedJd: string; changes: string[] }
 
-  return NextResponse.json(result)
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('Refine JD error:', error)
+    return NextResponse.json({ error: 'Có lỗi xảy ra khi tinh chỉnh JD' }, { status: 500 })
+  }
 }

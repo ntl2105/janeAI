@@ -135,9 +135,12 @@ export default function Home() {
       if (data.refinedJd) {
         setRefinedJd(data.refinedJd)
         setChanges(data.changes ?? [])
+      } else {
+        alert('Lỗi: ' + (data.error ?? 'Không rõ nguyên nhân'))
       }
-    } catch {
-      alert('Có lỗi khi tinh chỉnh JD')
+    } catch (e) {
+      console.error('Refine error:', e)
+      alert('Không kết nối được server, thử lại nhé!')
     } finally {
       setRefining(false)
     }
