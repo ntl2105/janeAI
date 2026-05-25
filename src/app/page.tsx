@@ -310,7 +310,7 @@ export default function Home() {
                   <button
                     onClick={handleCreateQuestionnaire}
                     disabled={generatingQ || !currentJdHistoryId}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     {generatingQ ? 'Đang tạo bảng hỏi...' : '+ Tạo bảng hỏi cho sếp'}
                   </button>
