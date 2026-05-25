@@ -201,33 +201,40 @@ export default function QuestionnaireWizard({
 
                 {q.type === 'skill_matrix' && (
                   <div className="space-y-2">
-                    {((answers[q.id] as Array<{ skill: string; level: string }>) ?? []).map(
-                      (item, i) => (
-                        <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2.5">
-                          <span className="text-sm text-gray-700">{item.skill}</span>
-                          <div className="flex gap-1">
-                            {['MUST', 'NICE'].map((level) => (
-                              <button
-                                key={level}
-                                onClick={() => {
-                                  const updated = [...((answers[q.id] as Array<{ skill: string; level: string }>) ?? [])]
-                                  updated[i] = { ...updated[i], level }
-                                  setAnswer(q.id, updated)
-                                }}
-                                className={`text-xs font-bold px-2 py-0.5 rounded border transition-colors ${
-                                  item.level === level
-                                    ? level === 'MUST'
-                                      ? 'text-red-600 bg-red-50 border-red-200'
-                                      : 'text-amber-600 bg-amber-50 border-amber-200'
-                                    : 'text-gray-400 bg-gray-50 border-gray-200'
-                                }`}
-                              >
-                                {level}
-                              </button>
-                            ))}
-                          </div>
+                    {(Array.isArray(answers[q.id])
+                      ? (answers[q.id] as Array<{ skill: string; level: string }>)
+                      : []
+                    ).map((item, i) => (
+                      <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+                        <span className="text-sm text-gray-700">{item.skill}</span>
+                        <div className="flex gap-1">
+                          {['MUST', 'NICE'].map((level) => (
+                            <button
+                              key={level}
+                              onClick={() => {
+                                const current = Array.isArray(answers[q.id])
+                                  ? (answers[q.id] as Array<{ skill: string; level: string }>)
+                                  : []
+                                const updated = [...current]
+                                updated[i] = { ...updated[i], level }
+                                setAnswer(q.id, updated)
+                              }}
+                              className={`text-xs font-bold px-2 py-0.5 rounded border transition-colors ${
+                                item.level === level
+                                  ? level === 'MUST'
+                                    ? 'text-red-600 bg-red-50 border-red-200'
+                                    : 'text-amber-600 bg-amber-50 border-amber-200'
+                                  : 'text-gray-400 bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              {level}
+                            </button>
+                          ))}
                         </div>
-                      )
+                      </div>
+                    ))}
+                    {!Array.isArray(answers[q.id]) && (
+                      <p className="text-xs text-gray-400 italic">Chưa có dữ liệu skill — bạn có thể bỏ qua hoặc nhắn recruiter.</p>
                     )}
                   </div>
                 )}
