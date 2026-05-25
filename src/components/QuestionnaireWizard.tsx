@@ -29,6 +29,7 @@ export default function QuestionnaireWizard({
   const [answers, setAnswers] = useState<Record<string, unknown>>(prefilledAnswers)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [skillInputs, setSkillInputs] = useState<Record<string, string>>({})
 
   const sections = Array.from({ length: 7 }, (_, i) => i + 1)
   const currentQuestions = questions.filter((q) => q.section === step)
@@ -207,7 +208,7 @@ export default function QuestionnaireWizard({
                     ).map((item, i) => (
                       <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2.5">
                         <span className="text-sm text-gray-700">{item.skill}</span>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-2">
                           {['MUST', 'NICE'].map((level) => (
                             <button
                               key={level}
@@ -230,12 +231,52 @@ export default function QuestionnaireWizard({
                               {level}
                             </button>
                           ))}
+                          <button
+                            onClick={() => {
+                              const current = Array.isArray(answers[q.id])
+                                ? (answers[q.id] as Array<{ skill: string; level: string }>)
+                                : []
+                              setAnswer(q.id, current.filter((_, idx) => idx !== i))
+                            }}
+                            className="text-gray-300 hover:text-red-400 text-xs ml-1 transition-colors"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
                     ))}
-                    {!Array.isArray(answers[q.id]) && (
-                      <p className="text-xs text-gray-400 italic">Chưa có dữ liệu skill — bạn có thể bỏ qua hoặc nhắn recruiter.</p>
-                    )}
+                    {/* Ô thêm skill mới */}
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        type="text"
+                        placeholder="Thêm skill... VD: React, SQL"
+                        value={skillInputs[q.id] ?? ''}
+                        onChange={(e) => setSkillInputs((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && skillInputs[q.id]?.trim()) {
+                            const current = Array.isArray(answers[q.id])
+                              ? (answers[q.id] as Array<{ skill: string; level: string }>)
+                              : []
+                            setAnswer(q.id, [...current, { skill: skillInputs[q.id].trim(), level: 'MUST' }])
+                            setSkillInputs((prev) => ({ ...prev, [q.id]: '' }))
+                          }
+                        }}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!skillInputs[q.id]?.trim()) return
+                          const current = Array.isArray(answers[q.id])
+                            ? (answers[q.id] as Array<{ skill: string; level: string }>)
+                            : []
+                          setAnswer(q.id, [...current, { skill: skillInputs[q.id].trim(), level: 'MUST' }])
+                          setSkillInputs((prev) => ({ ...prev, [q.id]: '' }))
+                        }}
+                        className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                      >
+                        + Thêm
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
