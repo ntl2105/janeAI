@@ -23,6 +23,7 @@ export default function Home() {
   const [checking, setChecking] = useState(false)
   const refinedJdRef = useRef<HTMLDivElement>(null)
   const [notAnsweredYet, setNotAnsweredYet] = useState(false)
+  const [showRefinedToast, setShowRefinedToast] = useState(false)
 
   useEffect(() => {
     fetchHistory()
@@ -136,6 +137,8 @@ export default function Home() {
       if (data.refinedJd) {
         setRefinedJd(data.refinedJd)
         setChanges(data.changes ?? [])
+        setShowRefinedToast(true)
+        setTimeout(() => setShowRefinedToast(false), 4000)
         setTimeout(() => refinedJdRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
       } else {
         alert('Lỗi: ' + (data.error ?? 'Không rõ nguyên nhân'))
@@ -160,6 +163,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast thông báo tinh chỉnh xong */}
+      {showRefinedToast && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg animate-pulse">
+          <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-semibold">JD đã tinh chỉnh xong! Xem bên dưới 👇</span>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
