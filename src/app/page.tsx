@@ -19,7 +19,7 @@ export default async function LandingPage() {
             <span className="font-semibold text-gray-900 text-sm tracking-tight">Jane AI</span>
           </div>
           <SignInButton mode="modal">
-            <button className="flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-700 transition-colors cursor-pointer">
+            <button className="flex items-center gap-2 bg-[#1B2B6E] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#152258] transition-colors cursor-pointer">
               Dùng thử miễn phí
             </button>
           </SignInButton>
@@ -45,7 +45,7 @@ export default async function LandingPage() {
               </div>
               <div className="flex items-center gap-4">
                 <SignInButton mode="modal">
-                  <button className="flex items-center gap-2.5 bg-gray-900 text-white px-7 py-3.5 rounded-full font-medium hover:bg-gray-700 transition-colors cursor-pointer">
+                  <button className="flex items-center gap-2.5 bg-[#1B2B6E] text-white px-7 py-3.5 rounded-full font-medium hover:bg-[#152258] transition-colors cursor-pointer">
                     Đăng nhập với Google
                   </button>
                 </SignInButton>
@@ -135,7 +135,7 @@ export default async function LandingPage() {
             Miễn phí. Không cần setup. Đăng nhập và thử ngay.
           </p>
           <SignInButton mode="modal">
-            <button className="inline-flex items-center gap-2.5 bg-gray-900 text-white px-9 py-4 rounded-full font-medium text-base hover:bg-gray-700 transition-colors cursor-pointer">
+            <button className="inline-flex items-center gap-2.5 bg-[#1B2B6E] text-white px-9 py-4 rounded-full font-medium text-base hover:bg-[#152258] transition-colors cursor-pointer">
               Đăng nhập với Google
             </button>
           </SignInButton>
