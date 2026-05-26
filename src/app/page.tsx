@@ -51,6 +51,14 @@ export default async function LandingPage() {
                 </SignInButton>
                 <span className="text-sm text-gray-400">Miễn phí</span>
               </div>
+
+              <div className="pt-2">
+                <p className="text-xs text-gray-300 uppercase tracking-widest mb-4">Được xây bởi</p>
+                <div className="flex items-center gap-6">
+                  <Image src="/logo-oac.png" alt="One Arrow Consulting" width={100} height={60} className="object-contain opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
+                  <Image src="/logo-recruitment-academy.png" alt="Recruitment Academy by OAC" width={100} height={60} className="object-contain opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
+                </div>
+              </div>
             </div>
 
             <div className="relative">
