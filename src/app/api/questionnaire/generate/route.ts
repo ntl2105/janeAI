@@ -69,7 +69,11 @@ LƯU Ý QUAN TRỌNG: Câu loại skill_matrix PHẢI được pre-fill trong pr
 Tạo đủ 7 nhóm theo cấu trúc:
 - Section 1 (Outcome): 3 câu — vấn đề cần giải quyết (open, aiPrefilled), urgent (yes_no, aiPrefilled), confidential (yes_no, options: ["Tuyển công khai bình thường", "Confidential — không đăng public, tuyển kín"], KHÔNG aiPrefilled — để sếp tự chọn, text câu hỏi: "Vị trí này tuyển công khai hay confidential?")
 - Section 2 (History): 2 câu — tuyển bao lâu (multiple_choice, options: ["Mới mở","1-2 tháng","3+ tháng"]), đã gặp UV chưa lý do chưa chốt (open)
-- Section 3 (Requirements): 3 câu — số năm KN (multiple_choice, options: ["1-2 năm","3+ năm","5+ năm"], aiPrefilled), tech stack (skill_matrix, aiPrefilled), tiếng Anh (multiple_choice, options: ["Cơ bản — đọc được tài liệu kỹ thuật","Giao tiếp được — trao đổi công việc với người nước ngoài","Thành thạo / Song ngữ — viết email, present, lead meeting"], aiPrefilled)
+- Section 3 (Requirements): 2-3 câu tùy JD:
+  + open, aiPrefilled: "JD nêu [X] năm kinh nghiệm — anh/chị có thể linh hoạt không? Minimum thực tế là bao nhiêu?" (thay [X] bằng số năm thực tế trong JD, pre-fill bằng nhận xét từ JD)
+  + open, aiPrefilled, CHỈ THÊM NẾU JD có yêu cầu kinh nghiệm management/leadership: "JD yêu cầu [Y] năm kinh nghiệm management — có bắt buộc không? Nếu có, minimum thực tế là bao nhiêu?" (thay [Y] bằng số năm trong JD). Nếu JD KHÔNG đề cập management thì KHÔNG tạo câu này.
+  + skill_matrix, aiPrefilled (tech stack)
+  + multiple_choice, aiPrefilled, options: ["Cơ bản — đọc được tài liệu kỹ thuật","Giao tiếp được — trao đổi công việc với người nước ngoài","Thành thạo / Song ngữ — viết email, present, lead meeting"] (tiếng Anh)
 - Section 4 (Culture fit): 4 câu — 3 cặp trait dạng yes_no (KHÔNG aiPrefilled, sếp tự chọn), 1 câu mở cuối:
   + yes_no, text: "Phong cách làm việc", options: ["Check-in thường xuyên với sếp", "Tự xử lý, báo cáo khi cần"]
   + yes_no, text: "Cách tiếp cận công việc", options: ["Làm theo yêu cầu rõ ràng", "Tự tìm hiểu vấn đề và đề xuất hướng giải quyết"]
