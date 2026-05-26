@@ -60,7 +60,7 @@ Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
 }
 
 Tạo đủ 7 nhóm theo cấu trúc:
-- Section 1 (Outcome): 3 câu — vấn đề cần giải quyết (open, aiPrefilled), urgent (yes_no, aiPrefilled), bảo mật (yes_no, aiPrefilled)
+- Section 1 (Outcome): 3 câu — vấn đề cần giải quyết (open, aiPrefilled), urgent (yes_no, aiPrefilled), confidential (yes_no, options: ["Tuyển công khai bình thường", "Confidential — không đăng public, tuyển kín"], KHÔNG aiPrefilled — để sếp tự chọn, text câu hỏi: "Vị trí này tuyển công khai hay confidential?")
 - Section 2 (History): 2 câu — tuyển bao lâu (multiple_choice, options: ["Mới mở","1-2 tháng","3+ tháng"]), đã gặp UV chưa lý do chưa chốt (open)
 - Section 3 (Requirements): 3 câu — số năm KN (multiple_choice, options: ["1-2 năm","3+ năm","5+ năm"], aiPrefilled), tech stack (skill_matrix, aiPrefilled), tiếng Anh (multiple_choice, options: ["Đọc hiểu tài liệu kỹ thuật","Giao tiếp với khách hàng nước ngoài","Lead meeting bằng tiếng Anh"], aiPrefilled)
 - Section 4 (Culture fit): 2 câu — phong cách làm việc (checkbox_multi, options: ["Tự quản lý tốt, autonomous","Thích được mentor, học hỏi","Move fast, chịu được ambiguity","Process-driven, có cấu trúc"]), thêm về văn hoá (open)
