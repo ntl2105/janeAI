@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { JdHistory } from '@/lib/supabase'
 
 export default function Home() {
@@ -33,11 +33,9 @@ export default function Home() {
 
   const refinedJdRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchHistory()
-  }, [])
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
-  async function fetchHistory() {
+  const fetchHistory = useCallback(async () => {
     try {
       const res = await fetch('/api/history')
       const data = await res.json()
@@ -45,22 +43,30 @@ export default function Home() {
     } catch (e) {
       console.error(e)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchHistory()
+  }, [fetchHistory])
 
   async function handleHistoryClick(id: string) {
-    const res = await fetch(`/api/history/${id}`)
-    const data = await res.json()
-    if (data.item) {
-      setPastedJd(data.item.generated_jd)
-      setJobTitle(data.item.job_title)
-      setRawInput(data.item.raw_input ?? '')
-      setQuestionnaireToken(null)
-      setQuestionnaireId(null)
-      setAnswers(null)
-      setRefinedJd('')
-      setChanges([])
-      setNotAnsweredYet(false)
-      setShowHistory(false)
+    try {
+      const res = await fetch(`/api/history/${id}`)
+      const data = await res.json()
+      if (data.item) {
+        setPastedJd(data.item.generated_jd)
+        setJobTitle(data.item.job_title)
+        setRawInput(data.item.raw_input ?? '')
+        setQuestionnaireToken(null)
+        setQuestionnaireId(null)
+        setAnswers(null)
+        setRefinedJd('')
+        setChanges([])
+        setNotAnsweredYet(false)
+        setShowHistory(false)
+      }
+    } catch {
+      alert('Không tải được JD, thử lại nhé!')
     }
   }
 
@@ -127,14 +133,19 @@ export default function Home() {
     if (!questionnaireId) return
     setChecking(true)
     setNotAnsweredYet(false)
-    const res = await fetch(`/api/questionnaire/${questionnaireId}/answers`)
-    const data = await res.json()
-    if (data.answers) {
-      setAnswers(data.answers)
-    } else {
-      setNotAnsweredYet(true)
+    try {
+      const res = await fetch(`/api/questionnaire/${questionnaireId}/answers`)
+      const data = await res.json()
+      if (data.answers) {
+        setAnswers(data.answers)
+      } else {
+        setNotAnsweredYet(true)
+      }
+    } catch {
+      alert('Không kết nối được, thử lại nhé!')
+    } finally {
+      setChecking(false)
     }
-    setChecking(false)
   }
 
   async function handleRefineJd() {
@@ -340,11 +351,11 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
                 <span className="text-xs text-indigo-700 flex-1 truncate">
-                  {typeof window !== 'undefined' ? window.location.origin : ''}/q/{questionnaireToken}
+                  {origin}/q/{questionnaireToken}
                 </span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/q/${questionnaireToken}`)
+                    navigator.clipboard.writeText(`${origin}/q/${questionnaireToken}`)
                     setCopiedLink(true)
                     setTimeout(() => setCopiedLink(false), 2000)
                   }}
