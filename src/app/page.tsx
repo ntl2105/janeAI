@@ -5,6 +5,7 @@ import { JdHistory } from '@/lib/supabase'
 
 export default function Home() {
   // Primary state
+  const [pastedTitle, setPastedTitle] = useState('')
   const [pastedJd, setPastedJd] = useState('')
 
   // Draft flow (accordion)
@@ -54,6 +55,7 @@ export default function Home() {
       const res = await fetch(`/api/history/${id}`)
       const data = await res.json()
       if (data.item) {
+        setPastedTitle(data.item.job_title)
         setPastedJd(data.item.generated_jd)
         setJobTitle(data.item.job_title)
         setRawInput(data.item.raw_input ?? '')
@@ -112,7 +114,7 @@ export default function Home() {
       const res = await fetch('/api/questionnaire/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jdText: pastedJd }),
+        body: JSON.stringify({ jdText: pastedJd, jobTitle: pastedTitle.trim() || undefined }),
       })
       const data = await res.json()
       if (data.token) {
@@ -246,8 +248,18 @@ export default function Home() {
         {/* Card chính: Paste JD */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <div>
-            <h2 className="font-semibold text-gray-800 mb-1">Paste JD vào đây</h2>
-            <p className="text-xs text-gray-400">Jane sẽ tự đọc và tạo bảng hỏi cho sếp xác nhận</p>
+            <h2 className="font-semibold text-gray-800 mb-1">Tạo bảng hỏi cho sếp</h2>
+            <p className="text-xs text-gray-400">Jane sẽ tự đọc JD và tạo bảng hỏi để sếp xác nhận</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Tên vị trí</label>
+            <input
+              type="text"
+              value={pastedTitle}
+              onChange={(e) => setPastedTitle(e.target.value)}
+              placeholder="VD: Senior Frontend Developer"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
           <textarea
             value={pastedJd}

@@ -9,7 +9,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
-    const { jdText } = await req.json()
+    const { jdText, jobTitle: providedTitle } = await req.json()
 
     if (!jdText || typeof jdText !== 'string' || !jdText.trim()) {
       return NextResponse.json({ error: 'Thiếu nội dung JD' }, { status: 400 })
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         {
           role: 'user',
           content: `Bạn là chuyên gia tuyển dụng. Dựa trên JD sau, hãy:
-1. Extract tên vị trí tuyển dụng (jobTitle)
+1. ${providedTitle ? `Dùng tên vị trí đã cho: "${providedTitle}" (không cần extract lại)` : 'Extract tên vị trí tuyển dụng (jobTitle)'}
 2. Tạo bảng hỏi 7 nhóm dành cho HIRING MANAGER (sếp trực tiếp), KHÔNG phải HR
 
 Câu hỏi phải là những gì sếp biết và quyết định được: lý do mở vị trí, tiêu chí thực sự, văn hoá team, lịch phỏng vấn, điểm đặc biệt của team. KHÔNG hỏi về gói bảo hiểm, training budget (đó là việc HR).
@@ -94,7 +94,7 @@ Pre-fill tất cả câu có aiPrefilled: true dựa trên thông tin trong JD.`
     const { data: jdRecord, error: jdError } = await (getSupabase() as any)
       .from('jd_history')
       .insert({
-        job_title: parsed.jobTitle || 'Không rõ vị trí',
+        job_title: providedTitle || parsed.jobTitle || 'Không rõ vị trí',
         raw_input: jdText,
         generated_jd: jdText,
       })
