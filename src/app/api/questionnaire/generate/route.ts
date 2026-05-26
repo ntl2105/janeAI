@@ -9,10 +9,10 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
-    const { jdHistoryId, jobTitle, generatedJd } = await req.json()
+    const { jdText } = await req.json()
 
-    if (!jdHistoryId || !jobTitle || !generatedJd) {
-      return NextResponse.json({ error: 'Thiếu thông tin' }, { status: 400 })
+    if (!jdText || typeof jdText !== 'string' || !jdText.trim()) {
+      return NextResponse.json({ error: 'Thiếu nội dung JD' }, { status: 400 })
     }
 
     const message = await client.messages.create({
@@ -21,16 +21,19 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Bạn là chuyên gia tuyển dụng. Dựa trên JD sau, hãy tạo bảng hỏi 7 nhóm dành cho HIRING MANAGER (sếp trực tiếp), KHÔNG phải HR.
+          content: `Bạn là chuyên gia tuyển dụng. Dựa trên JD sau, hãy:
+1. Extract tên vị trí tuyển dụng (jobTitle)
+2. Tạo bảng hỏi 7 nhóm dành cho HIRING MANAGER (sếp trực tiếp), KHÔNG phải HR
 
 Câu hỏi phải là những gì sếp biết và quyết định được: lý do mở vị trí, tiêu chí thực sự, văn hoá team, lịch phỏng vấn, điểm đặc biệt của team. KHÔNG hỏi về gói bảo hiểm, training budget (đó là việc HR).
 
 **JD:**
-${generatedJd}
+${jdText}
 
 Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
 
 {
+  "jobTitle": "Senior Frontend Developer",
   "questions": [
     {
       "id": "outcome_1",
@@ -73,24 +76,43 @@ Pre-fill tất cả câu có aiPrefilled: true dựa trên thông tin trong JD.`
     const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
     const cleanRaw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
     const parsed = JSON.parse(cleanRaw) as {
+      jobTitle: string
       questions: Question[]
       prefilled_answers: Record<string, unknown>
     }
 
+    // Lưu JD vào jd_history trước
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: jdRecord, error: jdError } = await (getSupabase() as any)
+      .from('jd_history')
+      .insert({
+        job_title: parsed.jobTitle || 'Không rõ vị trí',
+        raw_input: jdText,
+        generated_jd: jdText,
+      })
+      .select('id')
+      .maybeSingle()
+
+    if (jdError) {
+      console.error('Supabase jd_history error:', jdError)
+      return NextResponse.json({ error: 'Lỗi lưu JD' }, { status: 500 })
+    }
+
+    // Tạo questionnaire linked với jd_history
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (getSupabase() as any)
       .from('questionnaires')
       .insert({
-        jd_history_id: jdHistoryId,
+        jd_history_id: jdRecord?.id ?? null,
         questions: parsed.questions,
         prefilled_answers: parsed.prefilled_answers,
       })
       .select('id, token')
-      .single()
+      .maybeSingle()
 
-    if (error) {
-      console.error('Supabase insert error:', error)
-      return NextResponse.json({ error: 'Lỗi lưu dữ liệu' }, { status: 500 })
+    if (error || !data) {
+      console.error('Supabase questionnaire error:', error)
+      return NextResponse.json({ error: 'Lỗi lưu bảng hỏi' }, { status: 500 })
     }
 
     return NextResponse.json({ id: data.id, token: data.token })
