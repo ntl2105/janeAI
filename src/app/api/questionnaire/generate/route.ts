@@ -55,9 +55,16 @@ Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
   ],
   "prefilled_answers": {
     "outcome_1": "Lý do mở vị trí dựa trên JD...",
-    "outcome_2": "Bình thường — 2-3 tháng"
+    "outcome_2": "Bình thường — 2-3 tháng",
+    "req_2": [
+      {"skill": "React", "level": "MUST"},
+      {"skill": "TypeScript", "level": "MUST"},
+      {"skill": "Next.js", "level": "NICE"}
+    ]
   }
 }
+
+LƯU Ý QUAN TRỌNG: Câu loại skill_matrix PHẢI được pre-fill trong prefilled_answers dưới dạng array of objects: [{"skill": "Tên kỹ năng", "level": "MUST"}, ...]. KHÔNG dùng string, KHÔNG bỏ trống. Mức level chỉ dùng "MUST" hoặc "NICE".
 
 Tạo đủ 7 nhóm theo cấu trúc:
 - Section 1 (Outcome): 3 câu — vấn đề cần giải quyết (open, aiPrefilled), urgent (yes_no, aiPrefilled), confidential (yes_no, options: ["Tuyển công khai bình thường", "Confidential — không đăng public, tuyển kín"], KHÔNG aiPrefilled — để sếp tự chọn, text câu hỏi: "Vị trí này tuyển công khai hay confidential?")
