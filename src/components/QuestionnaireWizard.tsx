@@ -10,10 +10,22 @@ type Props = {
   prefilledAnswers: Record<string, unknown>
 }
 
+const PAGE_SECTIONS: Record<number, number[]> = {
+  1: [1, 2],
+  2: [3, 4],
+  3: [5, 6, 7],
+}
+
+const PAGE_LABELS: Record<number, string> = {
+  1: 'Bối cảnh tuyển dụng',
+  2: 'Yêu cầu & văn hoá',
+  3: 'Quyền lợi & quy trình',
+}
+
 const SECTION_LABELS: Record<number, string> = {
   1: 'Outcome of the job',
   2: 'History of the job',
-  3: 'Requirement of the job',
+  3: 'Requirements',
   4: 'Culture fit',
   5: 'Package',
   6: 'Interview process',
@@ -31,9 +43,9 @@ export default function QuestionnaireWizard({
   const [submitted, setSubmitted] = useState(false)
   const [skillInputs, setSkillInputs] = useState<Record<string, string>>({})
 
-  const sections = Array.from({ length: 7 }, (_, i) => i + 1)
-  const currentQuestions = questions.filter((q) => q.section === step)
-  const totalSections = 7
+  const totalSections = 3
+  const currentSections = PAGE_SECTIONS[step] ?? []
+  const currentQuestions = questions.filter((q) => currentSections.includes(q.section))
 
   function setAnswer(questionId: string, value: unknown) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
@@ -96,12 +108,12 @@ export default function QuestionnaireWizard({
           <div className="px-6 pt-5 pb-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-indigo-600">
-                #{step} · {SECTION_LABELS[step]}
+                {PAGE_LABELS[step]}
               </span>
               <span className="text-xs text-gray-400">{step} / {totalSections}</span>
             </div>
             <div className="flex gap-1">
-              {sections.map((s) => (
+              {[1, 2, 3].map((s) => (
                 <div
                   key={s}
                   className={`h-1.5 flex-1 rounded-full transition-all ${s <= step ? 'bg-indigo-600' : 'bg-indigo-100'}`}
@@ -118,7 +130,20 @@ export default function QuestionnaireWizard({
 
           {/* Questions */}
           <div className="px-6 pb-6 pt-4 space-y-4">
-            {currentQuestions.map((q) => (
+            {currentSections.map((sectionNum, idx) => {
+              const sectionQs = currentQuestions.filter((q) => q.section === sectionNum)
+              if (!sectionQs.length) return null
+              return (
+                <div key={sectionNum}>
+                  {idx > 0 && (
+                    <div className="flex items-center gap-2 mt-2 mb-1">
+                      <div className="h-px flex-1 bg-gray-100" />
+                      <span className="text-xs text-gray-400">{SECTION_LABELS[sectionNum]}</span>
+                      <div className="h-px flex-1 bg-gray-100" />
+                    </div>
+                  )}
+                  <div className="space-y-4">
+                    {sectionQs.map((q) => (
               <div key={q.id} className="bg-gray-50 rounded-xl p-4 space-y-2">
                 <p className="text-sm font-medium text-gray-800">{q.text}</p>
                 {q.aiPrefilled && (
@@ -280,7 +305,11 @@ export default function QuestionnaireWizard({
                   </div>
                 )}
               </div>
-            ))}
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
 
             {/* Nav */}
             <div className="flex gap-3 pt-2">
