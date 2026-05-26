@@ -248,8 +248,8 @@ export default function Home() {
         {/* Card chính: Paste JD */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <div>
-            <h2 className="font-semibold text-gray-800 mb-1">Tạo bảng hỏi cho sếp</h2>
-            <p className="text-xs text-gray-400">Jane sẽ tự đọc JD và tạo bảng hỏi để sếp xác nhận</p>
+            <h2 className="font-semibold text-gray-800 mb-1">Bạn đang tuyển vị trí gì?</h2>
+            <p className="text-xs text-gray-400">Nếu đã có JD thì paste vào đây — Jane sẽ tạo bảng hỏi cho sếp xác nhận. Chưa có JD thì dùng phần gợi ý bên dưới.</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Tên vị trí</label>
