@@ -69,7 +69,7 @@ Tạo đủ 7 nhóm theo cấu trúc:
   + yes_no, text: "Môi trường", options: ["Tính ổn định cao", "Pivot nhanh, chịu được chaos"]
   + open, text: "Còn điều gì khác anh/chị muốn ở ứng viên?", KHÔNG aiPrefilled
 - Section 5 (Package): 2 câu — lương và title flex (yes_no, text cố định: "Mức lương và title có flexible không nếu gặp ứng viên xuất sắc?", aiPrefilled), điều đặc biệt trong team (open)
-- Section 6 (Interview process): 3 câu — số vòng (multiple_choice, options: ["2 vòng","3 vòng","4+ vòng"]), có test kỹ thuật (multiple_choice, options: ["Có — take-home assignment","Có — live coding","Không test"]), lịch available (open)
+- Section 6 (Interview process): 3 câu — số vòng (multiple_choice, options: ["2 vòng","3 vòng","4+ vòng"]), có test kỹ thuật (multiple_choice, options: ["Có — take-home assignment","Không test"]), lịch available (open)
 - Section 7 (USP): 3 câu — tại sao UV giỏi nên về (open), grow thế nào 1-2 năm (open), challenge pain point (open)
 
 Pre-fill tất cả câu có aiPrefilled: true dựa trên thông tin trong JD.`,
