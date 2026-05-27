@@ -58,7 +58,10 @@ export default async function LandingPage() {
                   <Image src="/logo-oac.png" alt="One Arrow Consulting" width={225} height={225} className="w-24 h-24 object-contain" />
                   <Image src="/logo-recruitment-academy.png" alt="Recruitment Academy by OAC" width={225} height={225} className="w-24 h-24 object-contain" />
                 </div>
-                <p className="text-xs text-gray-300 mt-4">Powered by <span className="text-gray-400 font-medium">Harari Academy</span></p>
+                <div className="flex items-center gap-2 mt-4">
+                  <p className="text-xs text-gray-300">Powered by</p>
+                  <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="h-5 w-auto object-contain opacity-60" />
+                </div>
               </div>
             </div>
 
@@ -218,7 +221,10 @@ export default async function LandingPage() {
               </div>
               <span className="text-sm text-gray-400">Jane AI</span>
             </div>
-            <p className="text-xs text-gray-300">© 2025 Jane AI. Built by a headhunter, for recruiters. · Powered by <span className="text-gray-400">Harari Academy</span></p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-300">© 2025 Jane AI. Built by a headhunter, for recruiters. · Powered by</p>
+              <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="h-4 w-auto object-contain opacity-50" />
+            </div>
           </div>
         </footer>
       </Show>
