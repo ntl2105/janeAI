@@ -149,6 +149,62 @@ export default async function LandingPage() {
           </SignInButton>
         </section>
 
+        <hr className="border-gray-100 max-w-5xl mx-auto" />
+
+        {/* Connect + Coffee */}
+        <section className="py-20 px-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+
+            {/* Connect with Jane */}
+            <div className="space-y-7">
+              <p className="text-xs font-medium text-gray-400 tracking-widest uppercase">Kết nối với Jane</p>
+              <div className="space-y-4">
+                <a href="https://www.linkedin.com/in/janenguyen4/" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-4 text-gray-600 hover:text-[#1B2B6E] transition-colors group">
+                  <div className="w-10 h-10 rounded-xl border border-gray-200 group-hover:border-[#1B2B6E] transition-colors flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">LinkedIn</p>
+                    <p className="text-xs text-gray-400">Jane Nguyen</p>
+                  </div>
+                </a>
+
+                <a href="https://www.facebook.com/moonbtn/" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-4 text-gray-600 hover:text-[#1B2B6E] transition-colors group">
+                  <div className="w-10 h-10 rounded-xl border border-gray-200 group-hover:border-[#1B2B6E] transition-colors flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Facebook</p>
+                    <p className="text-xs text-gray-400">Jane Nguyen</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* Buy me a coffee */}
+            <div className="space-y-5">
+              <p className="text-xs font-medium text-gray-400 tracking-widest uppercase">Mời Jane một ly cà phê ☕</p>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                Jane AI hoàn toàn miễn phí. Nếu thấy hữu ích, bạn có thể ủng hộ Jane một ly để tiếp tục phát triển.
+              </p>
+              <Image
+                src="/qr-vpbank.png"
+                alt="QR chuyển khoản VPBank — Jane Nguyen"
+                width={180}
+                height={200}
+                className="rounded-2xl border border-gray-100 shadow-sm"
+              />
+            </div>
+
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="border-t border-gray-100 px-8 py-8">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
