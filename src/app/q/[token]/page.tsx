@@ -42,6 +42,7 @@ export default async function QuestionnairePage({
     id: string
     questions: Question[]
     prefilled_answers: Record<string, unknown>
+    language: 'vi' | 'en'
   }
 
   return (
@@ -50,6 +51,7 @@ export default async function QuestionnairePage({
       token={token}
       questions={data.questions}
       prefilledAnswers={data.prefilled_answers}
+      language={data.language ?? 'vi'}
     />
   )
 }
