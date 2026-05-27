@@ -8,6 +8,7 @@ type Props = {
   token: string
   questions: Question[]
   prefilledAnswers: Record<string, unknown>
+  language?: 'vi' | 'en'
 }
 
 const PAGE_SECTIONS: Record<number, number[]> = {
@@ -16,10 +17,41 @@ const PAGE_SECTIONS: Record<number, number[]> = {
   3: [5, 6, 7],
 }
 
-const PAGE_LABELS: Record<number, string> = {
-  1: 'Bối cảnh tuyển dụng',
-  2: 'Yêu cầu & văn hoá',
-  3: 'Quyền lợi & quy trình',
+const UI = {
+  vi: {
+    pageLabels: { 1: 'Bối cảnh tuyển dụng', 2: 'Yêu cầu & văn hoá', 3: 'Quyền lợi & quy trình' } as Record<number, string>,
+    headerTitle: 'Xác nhận yêu cầu tuyển dụng',
+    prefilledNote: '✦ Jane gợi ý — nhấn để sửa',
+    amberHint: 'Jane đã đọc JD và <span class="font-semibold">điền trước</span> một số ô. Anh/chị chỉ cần xem lại và sửa nếu sai.',
+    next: 'Tiếp theo →',
+    back: '← Quay lại',
+    submit: 'Gửi xác nhận →',
+    submitting: 'Đang gửi...',
+    skillMust: 'Bắt buộc',
+    skillNice: 'Có thì tốt',
+    addSkillBtn: '+ Thêm',
+    addSkillPlaceholder: 'Thêm skill... VD: React, SQL',
+    successTitle: 'Đã gửi xác nhận!',
+    successDesc: 'Recruiter sẽ nhận được câu trả lời của anh/chị và tinh chỉnh lại JD.',
+    footer: 'Không cần tài khoản · Câu trả lời gửi thẳng cho recruiter',
+  },
+  en: {
+    pageLabels: { 1: 'Recruitment Context', 2: 'Requirements & Culture', 3: 'Package & Process' } as Record<number, string>,
+    headerTitle: 'Confirm Job Requirements',
+    prefilledNote: "✦ Jane's suggestion — tap to edit",
+    amberHint: 'Jane has read the JD and <span class="font-semibold">pre-filled</span> some fields. Please review and correct if needed.',
+    next: 'Next →',
+    back: '← Back',
+    submit: 'Submit →',
+    submitting: 'Sending...',
+    skillMust: 'Required',
+    skillNice: 'Nice to have',
+    addSkillBtn: '+ Add',
+    addSkillPlaceholder: 'Add skill... e.g. React, SQL',
+    successTitle: 'Submitted!',
+    successDesc: 'The recruiter will receive your answers and refine the JD accordingly.',
+    footer: 'No account needed · Answers go directly to the recruiter',
+  },
 }
 
 const SECTION_LABELS: Record<number, string> = {
@@ -36,7 +68,9 @@ export default function QuestionnaireWizard({
   token,
   questions,
   prefilledAnswers,
+  language = 'vi',
 }: Props) {
+  const t = UI[language]
   const [step, setStep] = useState(1)
   const [answers, setAnswers] = useState<Record<string, unknown>>(prefilledAnswers)
   const [submitting, setSubmitting] = useState(false)
@@ -82,8 +116,8 @@ export default function QuestionnaireWizard({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Đã gửi xác nhận!</h2>
-          <p className="text-gray-500 text-sm">Recruiter sẽ nhận được câu trả lời của anh/chị và tinh chỉnh lại JD.</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t.successTitle}</h2>
+          <p className="text-gray-500 text-sm">{t.successDesc}</p>
         </div>
       </div>
     )
@@ -101,14 +135,14 @@ export default function QuestionnaireWizard({
               </div>
               <span className="font-semibold text-sm">Jane AI</span>
             </div>
-            <h1 className="text-xl font-bold mt-1">Xác nhận yêu cầu tuyển dụng</h1>
+            <h1 className="text-xl font-bold mt-1">{t.headerTitle}</h1>
           </div>
 
           {/* Progress */}
           <div className="px-6 pt-5 pb-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-indigo-600">
-                {PAGE_LABELS[step]}
+                {t.pageLabels[step]}
               </span>
               <span className="text-xs text-gray-400">{step} / {totalSections}</span>
             </div>
@@ -122,9 +156,7 @@ export default function QuestionnaireWizard({
             </div>
             <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
               <span className="text-amber-500 font-bold text-sm leading-none mt-0.5">✦</span>
-              <p className="text-xs text-amber-700">
-                Jane đã đọc JD và <span className="font-semibold">điền trước</span> một số ô. Anh/chị chỉ cần xem lại và sửa nếu sai.
-              </p>
+              <p className="text-xs text-amber-700" dangerouslySetInnerHTML={{ __html: t.amberHint }} />
             </div>
           </div>
 
@@ -147,7 +179,7 @@ export default function QuestionnaireWizard({
               <div key={q.id} className="bg-gray-50 rounded-xl p-4 space-y-2">
                 <p className="text-sm font-medium text-gray-800">{q.text}</p>
                 {q.aiPrefilled && (
-                  <p className="text-xs text-amber-600">✦ Jane gợi ý — nhấn để sửa</p>
+                  <p className="text-xs text-amber-600">{t.prefilledNote}</p>
                 )}
 
                 {q.type === 'open' && (
@@ -234,7 +266,7 @@ export default function QuestionnaireWizard({
                       <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2.5">
                         <span className="text-sm text-gray-700">{item.skill}</span>
                         <div className="flex items-center gap-2">
-                          {['MUST', 'NICE'].map((level) => (
+                          {([['MUST', t.skillMust], ['NICE', t.skillNice]] as const).map(([level, label]) => (
                             <button
                               key={level}
                               onClick={() => {
@@ -253,7 +285,7 @@ export default function QuestionnaireWizard({
                                   : 'text-gray-400 bg-gray-50 border-gray-200'
                               }`}
                             >
-                              {level}
+                              {label}
                             </button>
                           ))}
                           <button
@@ -274,7 +306,7 @@ export default function QuestionnaireWizard({
                     <div className="flex gap-2 mt-1">
                       <input
                         type="text"
-                        placeholder="Thêm skill... VD: React, SQL"
+                        placeholder={t.addSkillPlaceholder}
                         value={skillInputs[q.id] ?? ''}
                         onChange={(e) => setSkillInputs((prev) => ({ ...prev, [q.id]: e.target.value }))}
                         onKeyDown={(e) => {
@@ -299,7 +331,7 @@ export default function QuestionnaireWizard({
                         }}
                         className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
                       >
-                        + Thêm
+                        {t.addSkillBtn}
                       </button>
                     </div>
                   </div>
@@ -318,7 +350,7 @@ export default function QuestionnaireWizard({
                   onClick={() => setStep((s) => s - 1)}
                   className="px-5 py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium"
                 >
-                  ← Quay lại
+                  {t.back}
                 </button>
               )}
               {step < totalSections ? (
@@ -326,7 +358,7 @@ export default function QuestionnaireWizard({
                   onClick={() => setStep((s) => s + 1)}
                   className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
                 >
-                  Tiếp theo →
+                  {t.next}
                 </button>
               ) : (
                 <button
@@ -334,12 +366,12 @@ export default function QuestionnaireWizard({
                   disabled={submitting}
                   className="flex-1 bg-green-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
                 >
-                  {submitting ? 'Đang gửi...' : 'Gửi xác nhận →'}
+                  {submitting ? t.submitting : t.submit}
                 </button>
               )}
             </div>
             <p className="text-center text-xs text-gray-400">
-              Không cần tài khoản · Câu trả lời gửi thẳng cho recruiter
+              {t.footer}
             </p>
           </div>
         </div>
