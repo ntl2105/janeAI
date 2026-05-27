@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { UserButton } from '@clerk/nextjs'
 import { JdHistory } from '@/lib/supabase'
 
 export default function Home() {
@@ -207,6 +208,7 @@ export default function Home() {
               <p className="text-xs text-gray-500">Questionnaire Generator</p>
             </div>
           </div>
+          <div className="flex items-center gap-4">
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
@@ -216,6 +218,8 @@ export default function Home() {
             </svg>
             Lịch sử ({history.length})
           </button>
+          <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </header>
 
@@ -387,6 +391,16 @@ export default function Home() {
                 >
                   {copiedLink ? '✓ Đã copy!' : 'Copy link'}
                 </button>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <a
+                  href={`${origin}/q/${questionnaireToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-center text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg py-2 hover:bg-indigo-50 transition-colors"
+                >
+                  Xem bảng hỏi →
+                </a>
               </div>
               <p className="text-xs text-gray-400 mt-1.5">Gửi link này cho sếp qua Zalo/email — không cần đăng nhập</p>
             </div>
