@@ -53,14 +53,11 @@ export default async function LandingPage() {
               </div>
 
               <div className="pt-2">
-                <p className="text-xs text-gray-300 uppercase tracking-widest mb-4">Được xây bởi</p>
+                <p className="text-xs text-gray-300 uppercase tracking-widest mb-4">Powered by</p>
                 <div className="flex items-center gap-6">
                   <Image src="/logo-oac.png" alt="One Arrow Consulting" width={225} height={225} className="w-24 h-24 object-contain" />
                   <Image src="/logo-recruitment-academy.png" alt="Recruitment Academy by OAC" width={225} height={225} className="w-24 h-24 object-contain" />
-                </div>
-                <div className="flex items-center gap-2 mt-4">
-                  <p className="text-xs text-gray-300">Powered by</p>
-                  <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="h-5 w-auto object-contain opacity-60" />
+                  <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="w-24 h-24 object-contain" />
                 </div>
               </div>
             </div>
