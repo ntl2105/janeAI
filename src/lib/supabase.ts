@@ -37,6 +37,7 @@ export type Questionnaire = {
   questions: Question[]
   prefilled_answers: Record<string, unknown>
   status: 'pending' | 'answered'
+  language: 'vi' | 'en'
   expires_at: string
   created_at: string
 }
