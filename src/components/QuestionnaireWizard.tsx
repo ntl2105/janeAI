@@ -178,6 +178,9 @@ export default function QuestionnaireWizard({
                     {sectionQs.map((q) => (
               <div key={q.id} className="bg-gray-50 rounded-xl p-4 space-y-2">
                 <p className="text-sm font-medium text-gray-800">{q.text}</p>
+                {q.hint && (
+                  <p className="text-xs text-gray-400 italic">{q.hint}</p>
+                )}
                 {q.aiPrefilled && (
                   <p className="text-xs text-amber-600">{t.prefilledNote}</p>
                 )}
