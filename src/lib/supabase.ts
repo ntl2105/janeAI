@@ -25,6 +25,7 @@ export type Question = {
   section: number
   sectionLabel: string
   text: string
+  hint?: string
   type: 'yes_no' | 'multiple_choice' | 'open' | 'skill_matrix' | 'checkbox_multi'
   options?: string[]
   aiPrefilled?: boolean
@@ -47,4 +48,51 @@ export type QuestionnaireAnswer = {
   questionnaire_id: string
   answers: Record<string, unknown>
   submitted_at: string
+}
+
+let _adminClient: ReturnType<typeof createClient> | null = null
+
+export function getSupabaseAdmin() {
+  if (!_adminClient) {
+    _adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+  }
+  return _adminClient
+}
+
+export type PostCampaign = {
+  id: string
+  jd_history_id: string
+  channel: 'linkedin' | 'facebook' | 'threads' | 'topcv'
+  content: string
+  status: 'draft' | 'posted' | 'failed'
+  platform_post_id: string | null
+  posted_at: string | null
+  created_at: string
+}
+
+export type ConnectedAccount = {
+  id: string
+  user_id: string
+  platform: 'linkedin' | 'facebook' | 'threads'
+  platform_user_id: string | null
+  platform_user_name: string | null
+  facebook_pages: Array<{ id: string; name: string; access_token: string }> | null
+  selected_page_id: string | null
+  created_at: string
+}
+
+export type GeneratedPosts = {
+  linkedin: string
+  facebook: string
+  threads: string
+  topcv: string
+  job_type: string
+  channel_recommendations: Array<{
+    channel: string
+    stars: number
+    reason: string
+  }>
 }
