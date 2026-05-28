@@ -69,15 +69,23 @@ export default async function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 relative">
-                <Image
-                  src="/jane.jpg"
-                  alt="Jane Nguyen"
-                  fill
-                  className="object-cover object-top"
-                  priority
-                />
-              </div>
+              <a href="https://www.linkedin.com/in/janenguyen4/" target="_blank" rel="noopener noreferrer" className="block group">
+                <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 relative">
+                  <Image
+                    src="/jane.jpg"
+                    alt="Jane Nguyen"
+                    fill
+                    className="object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-2xl flex items-end justify-center pb-5 opacity-0 group-hover:opacity-100">
+                    <span className="bg-white/90 text-[#1B2B6E] text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      LinkedIn
+                    </span>
+                  </div>
+                </div>
+              </a>
               <div className="absolute -bottom-4 -left-4 bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
                 <p className="font-[family-name:var(--font-playfair)] text-3xl font-black text-[#E8614D]">10+</p>
                 <p className="text-xs text-gray-500 mt-0.5">năm trong nghề</p>
@@ -226,7 +234,7 @@ export default async function LandingPage() {
             </div>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-300">© 2025 Jane AI. Built by a headhunter, for recruiters. · Powered by</p>
-              <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="h-4 w-auto object-contain opacity-50" />
+              <Image src="/logo-harari.png" alt="Harari.ai" width={274} height={100} className="h-6 w-auto object-contain opacity-50" />
             </div>
           </div>
         </footer>

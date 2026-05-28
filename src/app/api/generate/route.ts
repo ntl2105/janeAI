@@ -2,11 +2,17 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@clerk/nextjs/server'
 import { getSupabase } from '@/lib/supabase'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { jobTitle, rawInput } = await req.json()
 
@@ -51,6 +57,7 @@ Viết tự nhiên, chuyên nghiệp, hấp dẫn ứng viên. Không bịa thô
         job_title: jobTitle,
         raw_input: rawInput,
         generated_jd: generatedJd,
+        user_id: userId,
       })
       .select('id')
       .maybeSingle()

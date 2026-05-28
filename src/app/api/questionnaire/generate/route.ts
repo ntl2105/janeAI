@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@clerk/nextjs/server'
 import { getSupabase } from '@/lib/supabase'
 import { Question } from '@/lib/supabase'
 
@@ -28,6 +29,7 @@ Return JSON in exactly this format, no additional text:
       "section": 1,
       "sectionLabel": "Outcome of the job",
       "text": "How did this role come about?",
+      "hint": "e.g. Is this a new role or a replacement? Why hire now? Is there already a team — how many people? Will this person manage an existing team or build one from scratch?",
       "type": "open",
       "aiPrefilled": true
     },
@@ -42,7 +44,7 @@ Return JSON in exactly this format, no additional text:
     }
   ],
   "prefilled_answers": {
-    "outcome_1": "This role was opened to...",
+    "outcome_1": "New role, team currently has X people, this person will...",
     "outcome_2": "Normal — 2-3 months",
     "req_2": [
       {"skill": "React", "level": "MUST"},
@@ -55,7 +57,7 @@ Return JSON in exactly this format, no additional text:
 IMPORTANT — skill_matrix type: prefilled_answers for skill_matrix MUST be an array of objects: [{"skill": "Skill name", "level": "MUST"}, ...]. Do NOT use strings, do NOT leave empty. Level must be "MUST" or "NICE" only. Pick at most 5 most important skills from the JD.
 
 Create all 7 sections as follows:
-- Section 1 (Outcome): 3 questions — role origin/how it came about (open, aiPrefilled, fixed text: "How did this role come about?"), urgency (yes_no, aiPrefilled), confidential (yes_no, options: ["Open recruitment — public posting", "Confidential — no public posting"], NOT aiPrefilled, question text: "Is this a public or confidential search?")
+- Section 1 (Outcome): 3 questions — role origin (open, aiPrefilled, fixed text: "How did this role come about?", fixed hint: "e.g. Is this a new role or a replacement? Why hire now? Is there already a team — how many people? Will this person manage an existing team or build one from scratch?", prefill briefly based on JD context — e.g. "New role, team of 5, this person will lead and grow the function" or "Backfill for departing manager, team is already in place"), urgency (yes_no, aiPrefilled), confidential (yes_no, options: ["Open recruitment — public posting", "Confidential — no public posting"], NOT aiPrefilled, question text: "Is this a public or confidential search?")
 - Section 2 (History): 2 questions — how long has the search been ongoing (multiple_choice, options: ["Brand new role","1-2 months","3+ months"]), have candidates been interviewed and why not hired yet (open)
 - Section 3 (Requirements): 2-3 questions depending on JD:
   + open, aiPrefilled: "The JD states [X] years of experience — how flexible is that? What is the real minimum?" (replace [X] with actual number from JD, pre-fill with a comment based on JD context)
@@ -99,7 +101,8 @@ Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
       "id": "outcome_1",
       "section": 1,
       "sectionLabel": "Outcome of the job",
-      "text": "Vị trí này được tạo ra để giải quyết vấn đề gì?",
+      "text": "Vị trí này xuất hiện như thế nào?",
+      "hint": "Gợi ý: Đây là vị trí mới hay thay thế ai đó? Tại sao cần hire lúc này? Đã có team chưa — nếu có thì khoảng bao nhiêu người? Người vào sẽ tiếp quản team sẵn hay phải xây từ đầu?",
       "type": "open",
       "aiPrefilled": true
     },
@@ -114,7 +117,7 @@ Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
     }
   ],
   "prefilled_answers": {
-    "outcome_1": "Lý do mở vị trí dựa trên JD...",
+    "outcome_1": "Vị trí mới, team hiện có X người, người vào sẽ...",
     "outcome_2": "Bình thường — 2-3 tháng",
     "req_2": [
       {"skill": "React", "level": "MUST"},
@@ -127,7 +130,7 @@ Trả về JSON theo đúng format sau, không thêm bất kỳ text nào khác:
 LƯU Ý QUAN TRỌNG: Câu loại skill_matrix PHẢI được pre-fill trong prefilled_answers dưới dạng array of objects: [{"skill": "Tên kỹ năng", "level": "MUST"}, ...]. KHÔNG dùng string, KHÔNG bỏ trống. Mức level chỉ dùng "MUST" hoặc "NICE". Chỉ chọn TỐI ĐA 5 kỹ năng quan trọng nhất từ JD — không liệt kê hết tất cả.
 
 Tạo đủ 7 nhóm theo cấu trúc:
-- Section 1 (Outcome): 3 câu — vấn đề cần giải quyết (open, aiPrefilled), urgent (yes_no, aiPrefilled), confidential (yes_no, options: ["Tuyển công khai bình thường", "Confidential — không đăng public, tuyển kín"], KHÔNG aiPrefilled — để sếp tự chọn, text câu hỏi: "Vị trí này tuyển công khai hay confidential?")
+- Section 1 (Outcome): 3 câu — bối cảnh mở vị trí (open, aiPrefilled, text cố định: "Vị trí này xuất hiện như thế nào?", hint cố định: "Gợi ý: Đây là vị trí mới hay thay thế ai đó? Tại sao cần hire lúc này? Đã có team chưa — nếu có thì khoảng bao nhiêu người? Người vào sẽ tiếp quản team sẵn hay phải xây từ đầu?", prefill ngắn gọn dựa trên JD — ví dụ: "Vị trí mới, team hiện 5 người, cần người vào quản lý và mở rộng" hoặc "Thay thế người cũ, team đã có sẵn"), urgent (yes_no, aiPrefilled), confidential (yes_no, options: ["Tuyển công khai bình thường", "Confidential — không đăng public, tuyển kín"], KHÔNG aiPrefilled — để sếp tự chọn, text câu hỏi: "Vị trí này tuyển công khai hay confidential?")
 - Section 2 (History): 2 câu — tuyển bao lâu (multiple_choice, options: ["Mới mở","1-2 tháng","3+ tháng"]), đã gặp UV chưa lý do chưa chốt (open)
 - Section 3 (Requirements): 2-3 câu tùy JD:
   + open, aiPrefilled: "JD nêu [X] năm kinh nghiệm — anh/chị có thể linh hoạt không? Minimum thực tế là bao nhiêu?" (thay [X] bằng số năm thực tế trong JD, pre-fill bằng nhận xét từ JD)
@@ -154,6 +157,11 @@ NGÔN NGỮ: Tất cả prefilled_answers phải viết HOÀN TOÀN bằng tiế
 }
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { jdText, jobTitle: providedTitle, language = 'vi' } = await req.json() as {
       jdText: string
@@ -199,6 +207,7 @@ export async function POST(req: NextRequest) {
         job_title: providedTitle || parsed.jobTitle || 'Không rõ vị trí',
         raw_input: jdText,
         generated_jd: jdText,
+        user_id: userId,
       })
       .select('id')
       .maybeSingle()
@@ -230,7 +239,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Lỗi lưu bảng hỏi' }, { status: 500 })
     }
 
-    return NextResponse.json({ id: data.id, token: data.token })
+    return NextResponse.json({ id: data.id, token: data.token, jd_history_id: jdRecord.id })
   } catch (error) {
     console.error('Generate questionnaire error:', error)
     return NextResponse.json({ error: 'Có lỗi xảy ra' }, { status: 500 })

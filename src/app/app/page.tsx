@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { UserButton } from '@clerk/nextjs'
 import { JdHistory } from '@/lib/supabase'
 import FeedbackWidget from '@/components/FeedbackWidget'
+import PostingCard from '@/components/PostingCard'
 
 export default function Home() {
   // Primary state
@@ -32,13 +33,51 @@ export default function Home() {
   const [generatedLanguage, setGeneratedLanguage] = useState<'vi' | 'en'>('vi')
   const [refining, setRefining] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [activeJdHistoryId, setActiveJdHistoryId] = useState<string | null>(null)
+  const [postingJdId, setPostingJdId] = useState<string | null>(null)
   const [notAnsweredYet, setNotAnsweredYet] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [showRefinedToast, setShowRefinedToast] = useState(false)
 
+  const [fetchingUrl, setFetchingUrl] = useState(false)
+  const [urlError, setUrlError] = useState('')
+
   const refinedJdRef = useRef<HTMLDivElement>(null)
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
+  function isUrl(value: string) {
+    try {
+      const u = new URL(value.trim())
+      return u.protocol === 'http:' || u.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+
+  async function handleJdInput(value: string) {
+    setPastedJd(value)
+    setUrlError('')
+    if (!isUrl(value)) return
+    setFetchingUrl(true)
+    try {
+      const res = await fetch('/api/fetch-jd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: value.trim() }),
+      })
+      const data = await res.json()
+      if (data.text) {
+        setPastedJd(data.text)
+      } else {
+        setUrlError(data.error ?? 'Không đọc được nội dung từ link này')
+      }
+    } catch {
+      setUrlError('Không kết nối được, thử lại nhé')
+    } finally {
+      setFetchingUrl(false)
+    }
+  }
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -53,6 +92,13 @@ export default function Home() {
   useEffect(() => {
     fetchHistory()
   }, [fetchHistory])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('oauth_success') || params.get('oauth_error')) {
+      window.history.replaceState({}, '', '/app')
+    }
+  }, [])
 
   async function handleHistoryClick(id: string) {
     try {
@@ -120,11 +166,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jdText: pastedJd, jobTitle: pastedTitle.trim() || undefined, language: questionnaireLanguage }),
       })
-      const data = await res.json()
+      const data = await res.json() as { token?: string; id?: string; jd_history_id?: string; error?: string }
       if (data.token) {
         setQuestionnaireToken(data.token)
-        setQuestionnaireId(data.id)
+        setQuestionnaireId(data.id ?? null)
         setGeneratedLanguage(questionnaireLanguage)
+        setActiveJdHistoryId(data.jd_history_id ?? null)
         fetchHistory()
       } else {
         alert('Có lỗi khi tạo bảng hỏi: ' + (data.error ?? ''))
@@ -183,6 +230,7 @@ export default function Home() {
     setRefinedJd('')
     setChanges([])
     fetchHistory()
+    if (activeJdHistoryId) setPostingJdId(activeJdHistoryId)
   }
 
   const formatDate = (iso: string) =>
@@ -240,14 +288,21 @@ export default function Home() {
                 <p className="px-4 py-6 text-sm text-gray-400 text-center">Chưa có JD nào</p>
               ) : (
                 history.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleHistoryClick(item.id)}
-                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 transition-colors"
-                  >
-                    <p className="font-medium text-sm text-gray-800 truncate">{item.job_title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.created_at)}</p>
-                  </button>
+                  <div key={item.id} className="flex items-center border-b border-gray-50 last:border-0">
+                    <button
+                      onClick={() => handleHistoryClick(item.id)}
+                      className="flex-1 text-left px-4 py-3 hover:bg-indigo-50 transition-colors"
+                    >
+                      <p className="font-medium text-sm text-gray-800 truncate">{item.job_title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.created_at)}</p>
+                    </button>
+                    <button
+                      onClick={() => { setPostingJdId(item.id); setShowHistory(false) }}
+                      className="px-3 py-1 mr-3 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 whitespace-nowrap"
+                    >
+                      Đăng tuyển
+                    </button>
+                  </div>
                 ))
               )}
             </div>
@@ -270,13 +325,30 @@ export default function Home() {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          <textarea
-            value={pastedJd}
-            onChange={(e) => setPastedJd(e.target.value)}
-            rows={10}
-            placeholder={'Paste toàn bộ JD vào đây...\n\nVD:\nSenior Frontend Developer\nCông ty ABC đang tìm kiếm...\nYêu cầu: 3+ năm kinh nghiệm React...'}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-          />
+          <div className="relative">
+            <textarea
+              value={pastedJd}
+              onChange={(e) => handleJdInput(e.target.value)}
+              rows={10}
+              disabled={fetchingUrl}
+              placeholder={'Paste JD hoặc link tuyển dụng vào đây...\n\nVD:\nhttps://filum.talent.vn/careers/job/...\n\nhoặc paste thẳng nội dung JD:\nSenior Frontend Developer\nCông ty ABC đang tìm kiếm...'}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none disabled:opacity-50"
+            />
+            {fetchingUrl && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg">
+                <div className="flex items-center gap-2 text-indigo-600 text-sm font-medium">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Đang đọc JD từ link...
+                </div>
+              </div>
+            )}
+          </div>
+          {urlError && (
+            <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{urlError} — hãy copy paste nội dung JD trực tiếp nhé.</p>
+          )}
           <div className="grid grid-cols-3 gap-2 text-center">
             {[
               { step: '1', text: 'Jane đọc JD', sub: 'tạo bảng hỏi phù hợp' },
@@ -512,6 +584,11 @@ export default function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Posting Card */}
+        {postingJdId && (
+          <PostingCard jdHistoryId={postingJdId} />
         )}
       </div>
     </div>
