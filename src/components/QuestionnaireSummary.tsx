@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useMemo } from 'react'
 import type { Question } from '@/lib/supabase'
 
 export type QuestionnaireSummaryData = {
@@ -16,7 +17,9 @@ type Props = {
 }
 
 function formatSubmittedAt(iso: string): string {
-  return new Date(iso).toLocaleString('vi-VN', {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
@@ -33,8 +36,9 @@ function renderAnswer(question: Question, answers: Record<string, unknown>): str
     return value
       .map((v) => {
         if (typeof v === 'object' && v !== null && 'skill' in v) {
-          const s = v as { skill: string; level: string }
-          return `${s.skill} [${s.level}]`
+          const s = v as { skill?: string; level?: string }
+          if (typeof s.skill !== 'string') return String(v)
+          return s.level ? `${s.skill} [${s.level}]` : s.skill
         }
         return String(v)
       })
@@ -49,19 +53,23 @@ export default function QuestionnaireSummary({ data, onPost }: Props) {
   const { jobTitle, submittedAt, questions, answers, token } = data
 
   // Group questions by section
-  const sections = questions.reduce<Record<number, { label: string; questions: Question[] }>>(
-    (acc, q) => {
-      if (!acc[q.section]) acc[q.section] = { label: q.sectionLabel, questions: [] }
-      acc[q.section].questions.push(q)
-      return acc
-    },
-    {}
+  const sections = useMemo(
+    () =>
+      questions.reduce<Record<number, { label: string; questions: Question[] }>>(
+        (acc, q) => {
+          if (!acc[q.section]) acc[q.section] = { label: q.sectionLabel, questions: [] }
+          acc[q.section].questions.push(q)
+          return acc
+        },
+        {}
+      ),
+    [questions]
   )
 
-  function handlePdf() {
+  const handlePdf = useCallback(() => {
     const origin = window.location.origin
     window.open(`${origin}/q/${token}/summary`, '_blank')
-  }
+  }, [token])
 
   return (
     <div className="bg-white rounded-xl border border-green-200 overflow-hidden">
