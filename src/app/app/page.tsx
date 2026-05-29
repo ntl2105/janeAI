@@ -97,27 +97,38 @@ export default function Home() {
 
   // Auto-poll: notify recruiter when HM submits answers
   useEffect(() => {
-    if (!questionnaireId || answersData) return
+    if (!questionnaireId) return
+    if (answersData) return  // already loaded — don't re-subscribe
+
+    let toastTimer: ReturnType<typeof setTimeout> | null = null
+    const controller = new AbortController()
 
     async function checkAnswers() {
       try {
-        const res = await fetch(`/api/questionnaire/${questionnaireId}/summary`)
-        if (res.ok) {
-          const data = await res.json() as QuestionnaireSummaryData
-          setAnswersData(data)
-          setShowAnswersReadyToast(true)
-          setTimeout(() => setShowAnswersReadyToast(false), 8000)
-        }
+        const res = await fetch(`/api/questionnaire/${questionnaireId}/summary`, {
+          signal: controller.signal,
+        })
+        if (!res.ok) return
+        const data = await res.json() as QuestionnaireSummaryData
+        // Runtime guard: ensure we got a real summary, not a partial object
+        if (!data || !data.answers) return
+        setAnswersData(data)
+        setShowAnswersReadyToast(true)
+        toastTimer = setTimeout(() => setShowAnswersReadyToast(false), 8000)
       } catch {
-        // silent — don't interrupt the recruiter
+        // AbortError and network errors are silently swallowed
       }
     }
 
-    // Check immediately on mount, then every 30s
     checkAnswers()
     const interval = setInterval(checkAnswers, 30000)
-    return () => clearInterval(interval)
-  }, [questionnaireId, answersData])
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+      if (toastTimer) clearTimeout(toastTimer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionnaireId])  // intentionally excludes answersData — the if-guard handles it
 
   async function handleHistoryClick(id: string) {
     try {
