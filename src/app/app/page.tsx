@@ -139,9 +139,11 @@ export default function Home() {
         setPastedJd(data.item.generated_jd)
         setJobTitle(data.item.job_title)
         setRawInput(data.item.raw_input ?? '')
-        setQuestionnaireToken(null)
-        setQuestionnaireId(null)
+        setActiveJdHistoryId(data.item.id)
+        setQuestionnaireToken(data.item.questionnaire_token ?? null)
+        setQuestionnaireId(data.item.questionnaire_id ?? null)
         setAnswersData(null)
+        setPostingJdId(null)
         setShowHistory(false)
       }
     } catch {
