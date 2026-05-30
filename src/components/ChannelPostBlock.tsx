@@ -83,7 +83,8 @@ export default function ChannelPostBlock({
   const canDirectPost = !isContentOnly && account !== null
   const posted = campaign?.status === 'posted'
   const failed = campaign?.status === 'failed'
-  const starsStr = '★'.repeat(stars) + '☆'.repeat(3 - stars)
+  const clampedStars = Math.min(Math.max(stars, 0), 3)
+  const starsStr = '★'.repeat(clampedStars) + '☆'.repeat(3 - clampedStars)
   const hasContent = !!campaign?.content
 
   async function handleGenerate() {
@@ -126,9 +127,12 @@ export default function ChannelPostBlock({
 
   function handleCopy() {
     if (!campaign) return
-    navigator.clipboard.writeText(campaign.content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    navigator.clipboard.writeText(campaign.content).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      // clipboard denied — user can see content in textarea to copy manually
+    })
   }
 
   return (

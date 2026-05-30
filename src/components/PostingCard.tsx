@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ChannelPostBlock from './ChannelPostBlock'
 import type { ConnectedAccount, PostCampaign, ChannelRecommendation } from '@/lib/supabase'
 
@@ -22,6 +22,7 @@ export default function PostingCard({ jdHistoryId }: Props) {
   const [seniority, setSeniority] = useState<string>('')
   const [campaigns, setCampaigns] = useState<CampaignMap>({})
   const [accounts, setAccounts] = useState<AccountMap>({})
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fetchAccounts = useCallback(async () => {
     const results = await Promise.allSettled(
@@ -94,11 +95,15 @@ export default function PostingCard({ jdHistoryId }: Props) {
       }
       return updated
     })
-    fetch('/api/post-job/campaigns', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaign_id: campaignId, content }),
-    }).catch(console.error)
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      fetch('/api/post-job/campaigns', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign_id: campaignId, content }),
+      }).catch(console.error)
+    }, 600)
   }
 
   function handleCampaignGenerated(channel: Channel, campaign: PostCampaign) {
