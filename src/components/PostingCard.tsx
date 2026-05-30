@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import ChannelPostBlock from './ChannelPostBlock'
-import type { GeneratedPosts, ConnectedAccount, PostCampaign } from '@/lib/supabase'
+import type { ConnectedAccount, PostCampaign, ChannelRecommendation } from '@/lib/supabase'
 
 type Channel = 'linkedin' | 'facebook' | 'threads' | 'topcv'
 const CHANNELS: Channel[] = ['linkedin', 'facebook', 'threads', 'topcv']
@@ -17,7 +17,9 @@ type AccountMap = Partial<Record<Channel, ConnectedAccount>>
 export default function PostingCard({ jdHistoryId }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [generated, setGenerated] = useState<GeneratedPosts | null>(null)
+  const [recommendations, setRecommendations] = useState<ChannelRecommendation[]>([])
+  const [jobType, setJobType] = useState<string>('')
+  const [seniority, setSeniority] = useState<string>('')
   const [campaigns, setCampaigns] = useState<CampaignMap>({})
   const [accounts, setAccounts] = useState<AccountMap>({})
 
@@ -42,42 +44,36 @@ export default function PostingCard({ jdHistoryId }: Props) {
     setLoading(true)
     setError(null)
     try {
-      // Check if campaigns already exist
+      // Fetch existing campaigns (nếu có)
       const campRes = await fetch(`/api/post-job/campaigns?jd_id=${jdHistoryId}`)
       const campData = await campRes.json() as { campaigns: PostCampaign[] }
-
       if (campData.campaigns?.length > 0) {
         const map: CampaignMap = {}
         campData.campaigns.forEach(c => { map[c.channel as Channel] = c })
         setCampaigns(map)
-        // Re-generate to get recommendations (not stored in DB)
-        const genRes = await fetch('/api/post-job/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jd_history_id: jdHistoryId }),
-        })
-        const genData = await genRes.json() as { generated: GeneratedPosts }
-        if (genData.generated) setGenerated(genData.generated)
-      } else {
-        // First time — generate everything
-        const genRes = await fetch('/api/post-job/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jd_history_id: jdHistoryId }),
-        })
-        const genData = await genRes.json() as { generated: GeneratedPosts; error?: string }
-        if (genData.error) throw new Error(genData.error)
-        setGenerated(genData.generated)
-
-        const newCampRes = await fetch(`/api/post-job/campaigns?jd_id=${jdHistoryId}`)
-        const newCampData = await newCampRes.json() as { campaigns: PostCampaign[] }
-        const map: CampaignMap = {}
-        newCampData.campaigns?.forEach(c => { map[c.channel as Channel] = c })
-        setCampaigns(map)
       }
+
+      // Fetch channel recommendations
+      const recRes = await fetch('/api/post-job/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd_history_id: jdHistoryId, mode: 'recommend' }),
+      })
+      const recData = await recRes.json() as {
+        recommendations: {
+          job_type: string
+          seniority: string
+          channel_recommendations: ChannelRecommendation[]
+        }
+        error?: string
+      }
+      if (recData.error) throw new Error(recData.error)
+      setRecommendations(recData.recommendations.channel_recommendations)
+      setJobType(recData.recommendations.job_type)
+      setSeniority(recData.recommendations.seniority)
     } catch (err) {
       console.error('PostingCard fetch error:', err)
-      setError('Không tải được nội dung, thử lại nhé!')
+      setError('Không tải được gợi ý kênh, thử lại nhé!')
     } finally {
       setLoading(false)
     }
@@ -105,6 +101,10 @@ export default function PostingCard({ jdHistoryId }: Props) {
     }).catch(console.error)
   }
 
+  function handleCampaignGenerated(channel: Channel, campaign: PostCampaign) {
+    setCampaigns(prev => ({ ...prev, [channel]: campaign }))
+  }
+
   async function handlePublish(campaignId: string) {
     const res = await fetch('/api/post-job/publish', {
       method: 'POST',
@@ -123,10 +123,15 @@ export default function PostingCard({ jdHistoryId }: Props) {
       }
       return updated
     })
-
-    // Refresh account status after posting
     fetchAccounts()
   }
+
+  // Sort channels by stars
+  const sortedChannels = [...CHANNELS].sort((a, b) => {
+    const starsA = recommendations.find(r => r.channel === a)?.stars ?? 0
+    const starsB = recommendations.find(r => r.channel === b)?.stars ?? 0
+    return starsB - starsA
+  })
 
   return (
     <div className="bg-white rounded-xl border border-indigo-200 overflow-hidden">
@@ -148,7 +153,7 @@ export default function PostingCard({ jdHistoryId }: Props) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <p className="text-sm text-gray-500">Jane đang phân tích JD và viết content... (~15s)</p>
+            <p className="text-sm text-gray-500">Jane đang phân tích JD... (~5s)</p>
           </div>
         )}
 
@@ -159,38 +164,32 @@ export default function PostingCard({ jdHistoryId }: Props) {
           </div>
         )}
 
-        {!loading && !error && generated && (
+        {!loading && !error && recommendations.length > 0 && (
           <>
-            {/* Channel recommendation chips */}
+            {/* Job classify summary */}
             <div className="bg-indigo-50 rounded-xl px-4 py-3">
-              <p className="text-xs font-semibold text-indigo-700 mb-2">Jane gợi ý cho role này</p>
-              <div className="flex flex-wrap gap-2">
-                {[...generated.channel_recommendations]
-                  .sort((a, b) => b.stars - a.stars)
-                  .map(rec => (
-                    <span
-                      key={rec.channel}
-                      className="text-xs px-2 py-1 rounded-full font-medium bg-white border border-indigo-200 text-indigo-600"
-                    >
-                      {rec.channel} {'★'.repeat(rec.stars)}{'☆'.repeat(3 - rec.stars)}
-                    </span>
-                  ))}
-              </div>
+              <p className="text-xs font-semibold text-indigo-700 mb-1">Jane phân tích</p>
+              <p className="text-xs text-indigo-600">
+                {jobType && seniority ? `${seniority.charAt(0).toUpperCase() + seniority.slice(1)} · ${jobType.charAt(0).toUpperCase() + jobType.slice(1)}` : ''}
+              </p>
             </div>
 
-            {/* Channel blocks */}
-            {CHANNELS.map(channel => {
-              const rec = generated.channel_recommendations.find(r => r.channel === channel)
+            {/* Channel blocks — sorted by stars, top channel open */}
+            {sortedChannels.map((channel, idx) => {
+              const rec = recommendations.find(r => r.channel === channel)
               return (
                 <ChannelPostBlock
                   key={channel}
                   channel={channel}
+                  jdHistoryId={jdHistoryId}
                   campaign={campaigns[channel] ?? null}
                   stars={rec?.stars ?? 1}
                   reason={rec?.reason ?? ''}
                   account={accounts[channel] ?? null}
+                  defaultOpen={idx === 0}
                   onPublish={handlePublish}
                   onContentChange={handleContentChange}
+                  onCampaignGenerated={(campaign) => handleCampaignGenerated(channel, campaign)}
                 />
               )
             })}
