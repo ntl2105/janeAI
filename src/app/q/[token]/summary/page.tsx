@@ -95,6 +95,7 @@ export default async function SummaryPrintPage({
 
   return (
     <>
+      <title>{`Jane AI - ${jobTitle}`}</title>
       <PrintTrigger />
       <style>{`
         @media print {
