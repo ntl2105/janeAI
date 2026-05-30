@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import type { ContentStyle, ChannelRecommendation } from '@/lib/supabase'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -10,7 +10,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 // Fetch questionnaire answers cho JD này
 async function fetchQuestionnaireContext(jdHistoryId: string): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = getSupabase() as any
+  const supabase = getSupabaseAdmin() as any
 
   const { data: q } = await supabase
     .from('questionnaires')
@@ -149,9 +149,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thiếu jd_history_id' }, { status: 400 })
     }
 
-    // Fetch JD
+    // Fetch JD (admin key — anon key blocked by RLS on jd_history)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: jd, error: jdError } = await (getSupabase() as any)
+    const { data: jd, error: jdError } = await (getSupabaseAdmin() as any)
       .from('jd_history')
       .select('job_title, generated_jd')
       .eq('id', jd_history_id)

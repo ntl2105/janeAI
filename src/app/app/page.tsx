@@ -490,7 +490,7 @@ export default function Home() {
         )}
 
         {/* Questionnaire Summary */}
-        {answersData && !postingJdId && (
+        {answersData && (
           <div className="max-w-2xl mx-auto">
             <QuestionnaireSummary
               data={answersData}
