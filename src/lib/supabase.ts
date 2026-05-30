@@ -84,15 +84,26 @@ export type ConnectedAccount = {
   created_at: string
 }
 
+export type ContentStyle = 'announcement' | 'story_telling' | 'benefit_focus' | 'seeding' | 'trending_funny'
+
+export type ChannelRecommendation = {
+  channel: 'linkedin' | 'facebook' | 'threads' | 'topcv'
+  stars: number
+  reason: string
+}
+
+export type ChannelRecommendations = {
+  job_type: string
+  seniority: string
+  channel_recommendations: ChannelRecommendation[]
+}
+
+// Giữ nguyên GeneratedPosts cho backwards compat (vẫn dùng trong campaigns)
 export type GeneratedPosts = {
   linkedin: string
   facebook: string
   threads: string
   topcv: string
   job_type: string
-  channel_recommendations: Array<{
-    channel: string
-    stars: number
-    reason: string
-  }>
+  channel_recommendations: ChannelRecommendation[]
 }
