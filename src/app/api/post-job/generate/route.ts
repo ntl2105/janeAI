@@ -227,6 +227,18 @@ function buildAntiPatternBlock(): string {
 - Câu đầu tiên phải là: câu hỏi, một observation cụ thể, hoặc một tình huống/scenario thật`
 }
 
+function buildReplyStarterPrompt(postContent: string): string {
+  return `Bạn là recruiter vừa đăng post sau lên Threads:
+
+${postContent}
+
+Viết 2 câu reply ngắn mà recruiter sẽ tự reply vào post trong 30 phút đầu để boost conversation.
+Mỗi reply: 1-2 câu, tự nhiên, thêm 1 chi tiết nhỏ về role/team chưa có trong post, hoặc invite người đọc hỏi thêm.
+KHÔNG dùng "apply ngay", "DM mình", KHÔNG sales.
+
+Trả về JSON duy nhất, không text thêm: ["reply 1", "reply 2"]`
+}
+
 function buildRecommendPrompt(jobTitle: string, jdText: string, questionnaireContext: string): string {
   return `Bạn là chuyên gia tuyển dụng. Phân tích JD và trả về JSON channel recommendation.
 
@@ -268,12 +280,15 @@ const STYLE_DESCRIPTIONS: Record<ContentStyle, string> = {
   benefit_focus: 'Hook bằng con số/quyền lợi cụ thể ngay đầu (lương, thưởng, cơ hội). Liệt kê đặc quyền trước yêu cầu.',
   seeding: 'Viết như đang chia sẻ tự nhiên, KHÔNG dùng từ "tuyển dụng"/"apply"/"ứng tuyển" trong 2 câu đầu. Casual, như bạn bè nhắn tin.',
   trending_funny: 'Hook bất ngờ, bắt trend hoặc dùng góc nhìn hài hước để phá rào cản. Phù hợp khi job có điểm bất lợi cần giảm nhẹ.',
+  opinion_hook: '[CHỈ DÙNG TRÊN THREADS] Mở đầu bằng take gây tranh cãi về ngành/nghề liên quan đến role này — một nhận định mà người trong ngành sẽ muốn đồng ý hoặc phản bác. Không nhắc tên công ty/role 3 câu đầu. Kết bằng câu hỏi mở mời người đọc chia sẻ quan điểm.',
+  relatable_scenario: '[CHỈ DÙNG TRÊN THREADS] Mở đầu bằng scenario cụ thể mà ứng viên mục tiêu đang sống right now — một khoảnh khắc, cảm giác, hoặc tình huống họ tự thấy mình trong đó ngay lập tức. Không nhắc tên công ty/role 3 câu đầu. Dẫn dắt tự nhiên vào role. Kết bằng câu hỏi mở.',
+  insider_drop: '[CHỈ DÙNG TRÊN THREADS] Mở đầu bằng 1 chi tiết nhỏ, thật, bất ngờ về team hoặc cách làm việc (lấy từ thông tin hiring manager đã cung cấp). Tạo cảm giác người đọc đang được nghe "bí mật nội bộ" — không giải thích ngay, để chi tiết đó tự nói lên. Kết bằng câu hỏi mở.',
 }
 
 const CHANNEL_RULES: Record<string, string> = {
   linkedin: 'Dài 150-250 từ. Emoji chừng mực (tối đa 3). Tone chuyên nghiệp. 125 ký tự đầu phải hook.',
   facebook: 'Dài 80-150 từ. 3 dòng đầu (125 ký tự) phải hook mạnh vì đây là phần hiển thị trước "Xem thêm". Emoji thoải mái hơn. Casual.',
-  threads: 'Tối đa 450 ký tự. 1 câu hook + 3 bullet siêu ngắn + 1 dòng CTA.',
+  threads: 'Tối đa 480 ký tự. KHÔNG dùng bullet. Viết thành đoạn ngắn tự nhiên như người thật đang nói chuyện. Câu cuối PHẢI là câu hỏi mở để kéo reply. Không nhắc tên công ty/vị trí trong 3 câu đầu. Tone: casual, opinionated, như Threads creator — không phải HR đăng job.',
   topcv: 'Full JD format chuẩn: Mô tả vị trí → Trách nhiệm → Yêu cầu (must have / nice to have rõ ràng) → Quyền lợi → Liên hệ. Formal, đầy đủ.',
 }
 
@@ -452,7 +467,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Lưu content thất bại' }, { status: 500 })
       }
 
-      return NextResponse.json({ campaign })
+      // Gen reply starters for Threads in parallel with upsert — already have content
+      let replyStarters: string[] = []
+      if (channel === 'threads') {
+        try {
+          const replyMsg = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 200,
+            messages: [{ role: 'user', content: buildReplyStarterPrompt(content) }],
+          })
+          const raw = replyMsg.content[0]?.type === 'text' ? replyMsg.content[0].text.trim() : '[]'
+          const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+          replyStarters = JSON.parse(clean)
+        } catch {
+          // reply starters are non-critical — fail silently
+        }
+      }
+
+      return NextResponse.json({ campaign, replyStarters })
     }
 
     return NextResponse.json({ error: 'Mode không hợp lệ' }, { status: 400 })
