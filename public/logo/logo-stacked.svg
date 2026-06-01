@@ -1,0 +1,6 @@
+<svg width="200" height="290" viewBox="0 0 200 290" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="100" fill="#1a2e6e"/>
+  <text x="100" y="134" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="104" font-weight="700" fill="white">J</text>
+  <text x="100" y="232" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="24" font-weight="600" letter-spacing="6" fill="#1a2e6e">JANE AI</text>
+  <text x="100" y="260" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="13" font-weight="300" letter-spacing="4" fill="#888888">THE RECRUITER</text>
+</svg>
