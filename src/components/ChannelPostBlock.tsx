@@ -120,6 +120,7 @@ export default function ChannelPostBlock({
   async function handleGenerate() {
     setGenerating(true)
     setGenerateError(null)
+    setReplyStarters([])
     try {
       const res = await fetch('/api/post-job/generate', {
         method: 'POST',

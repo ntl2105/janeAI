@@ -467,7 +467,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Lưu content thất bại' }, { status: 500 })
       }
 
-      // Gen reply starters for Threads in parallel with upsert — already have content
+      // Gen reply starters for Threads after upsert — non-critical, fail silently
       let replyStarters: string[] = []
       if (channel === 'threads') {
         try {
