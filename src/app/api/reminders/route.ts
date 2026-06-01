@@ -36,6 +36,9 @@ export async function GET() {
     // If there's a pending (unanswered) questionnaire, no reminder needed
     if (latestQ?.status === 'pending') continue
 
+    // If no questionnaire exists at all, skip
+    if (!latestQ) continue
+
     // Get latest answer for this questionnaire
     const { data: latestAns } = await sb
       .from('questionnaire_answers')
