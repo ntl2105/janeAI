@@ -18,6 +18,7 @@ export type JdHistory = {
   raw_input: string
   generated_jd: string
   created_at: string
+  status: 'active' | 'hired'
 }
 
 export type Question = {
@@ -41,6 +42,7 @@ export type Questionnaire = {
   language: 'vi' | 'en'
   expires_at: string
   created_at: string
+  is_resend: boolean
 }
 
 export type QuestionnaireAnswer = {
