@@ -479,8 +479,8 @@ export async function POST(req: NextRequest) {
           const raw = replyMsg.content[0]?.type === 'text' ? replyMsg.content[0].text.trim() : '[]'
           const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
           replyStarters = JSON.parse(clean)
-        } catch {
-          // reply starters are non-critical — fail silently
+        } catch (err) {
+          console.error('Reply starters generation failed:', err)
         }
       }
 
