@@ -43,6 +43,7 @@ export default async function QuestionnairePage({
     questions: Question[]
     prefilled_answers: Record<string, unknown>
     language: 'vi' | 'en'
+    is_resend: boolean
   }
 
   return (
@@ -52,6 +53,7 @@ export default async function QuestionnairePage({
       questions={data.questions}
       prefilledAnswers={data.prefilled_answers}
       language={data.language ?? 'vi'}
+      isResend={data.is_resend ?? false}
     />
   )
 }

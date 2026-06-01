@@ -9,6 +9,7 @@ type Props = {
   questions: Question[]
   prefilledAnswers: Record<string, unknown>
   language?: 'vi' | 'en'
+  isResend?: boolean
 }
 
 const PAGE_SECTIONS: Record<number, number[]> = {
@@ -69,6 +70,7 @@ export default function QuestionnaireWizard({
   questions,
   prefilledAnswers,
   language = 'vi',
+  isResend = false,
 }: Props) {
   const t = UI[language]
   const [step, setStep] = useState(1)
@@ -154,6 +156,13 @@ export default function QuestionnaireWizard({
                 />
               ))}
             </div>
+            {isResend && (
+              <div className="mb-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
+                {language === 'vi'
+                  ? 'Bảng hỏi này đã được điền sẵn từ lần trước — vui lòng xem lại và cập nhật nếu có thay đổi.'
+                  : 'This questionnaire is pre-filled from your previous submission — please review and update anything that has changed.'}
+              </div>
+            )}
             <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
               <span className="text-amber-500 font-bold text-sm leading-none mt-0.5">✦</span>
               <p className="text-xs text-amber-700" dangerouslySetInnerHTML={{ __html: t.amberHint }} />
