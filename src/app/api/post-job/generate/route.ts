@@ -284,7 +284,8 @@ function buildGeneratePrompt(
   channel: string,
   style: ContentStyle,
   persona: CandidatePersona,
-  storyAngle?: StoryAngle
+  storyAngle?: StoryAngle,
+  seniority = ''
 ): string {
   const personaBlock = `
 **Ứng viên mục tiêu:**
@@ -296,7 +297,7 @@ Bài viết phải address barrier và khai thác trigger — không viết cho 
 
   const angleBlock =
     style === 'story_telling' && storyAngle
-      ? `\n**Góc kể chuyện (bắt buộc theo):** ${buildAngleDirective(storyAngle, '', questionnaireContext)}`
+      ? `\n**Góc kể chuyện (bắt buộc theo):** ${buildAngleDirective(storyAngle, seniority, questionnaireContext)}`
       : ''
 
   return `Bạn là chuyên gia content tuyển dụng. Viết nội dung post job cho kênh ${channel}.
@@ -391,12 +392,45 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Thiếu channel hoặc style' }, { status: 400 })
       }
 
+      // Derive job classification from title heuristics
+      const jobTitleLower = jd.job_title.toLowerCase()
+      const jobType = jobTitleLower.match(/marketing/i)
+        ? 'marketing'
+        : jobTitleLower.match(/business|bd|sales|account/i)
+        ? 'business'
+        : jobTitleLower.match(/engineer|developer|dev|backend|frontend|fullstack|data|ml|ai|devops/i)
+        ? 'tech'
+        : 'other'
+
+      const seniority = jobTitleLower.match(/intern|fresher|graduate/i)
+        ? 'fresher'
+        : jobTitleLower.match(/junior|jr\./i)
+        ? 'junior'
+        : jobTitleLower.match(/manager|lead|head|director|vp/i)
+        ? 'manager'
+        : 'senior'
+
+      const persona = getCandidatePersona(jobType, seniority)
+      const storyAngle =
+        style === 'story_telling'
+          ? pickStoryAngle(jobType, seniority, questionnaireContext)
+          : undefined
+
       const message = await client.messages.create({
         model: 'claude-opus-4-7',
         max_tokens: 1500,
         messages: [{
           role: 'user',
-          content: buildGeneratePrompt(jd.job_title, jd.generated_jd, questionnaireContext, channel, style)
+          content: buildGeneratePrompt(
+            jd.job_title,
+            jd.generated_jd,
+            questionnaireContext,
+            channel,
+            style,
+            persona,
+            storyAngle,
+            seniority
+          ),
         }],
       })
 
