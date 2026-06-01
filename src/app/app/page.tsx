@@ -39,6 +39,10 @@ export default function Home() {
   const [fetchingUrl, setFetchingUrl] = useState(false)
   const [urlError, setUrlError] = useState('')
 
+  const [reminders, setReminders] = useState<{ jd_history_id: string; job_title: string }[]>([])
+  const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set())
+  const [resendingFor, setResendingFor] = useState<string | null>(null)
+
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   function isUrl(value: string) {
@@ -87,6 +91,13 @@ export default function Home() {
   useEffect(() => {
     fetchHistory()
   }, [fetchHistory])
+
+  useEffect(() => {
+    fetch('/api/reminders')
+      .then((r) => r.json())
+      .then((d) => { if (d.reminders) setReminders(d.reminders) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -209,12 +220,85 @@ export default function Home() {
     }
   }
 
+  async function handleMarkHired(jdHistoryId: string) {
+    await fetch(`/api/jd-history/${jdHistoryId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'hired' }),
+    })
+    setDismissedReminders((prev) => new Set([...prev, jdHistoryId]))
+    setHistory((prev) => prev.map((h) => h.id === jdHistoryId ? { ...h, status: 'hired' as const } : h))
+  }
+
+  async function handleResendQuestionnaire(jdHistoryId: string) {
+    setResendingFor(jdHistoryId)
+    try {
+      const res = await fetch('/api/questionnaire/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd_history_id: jdHistoryId }),
+      })
+      const data = await res.json() as { token?: string; id?: string; jd_history_id?: string; error?: string }
+      if (data.token) {
+        setQuestionnaireToken(data.token)
+        setQuestionnaireId(data.id ?? null)
+        setActiveJdHistoryId(jdHistoryId)
+        setAnswersData(null)
+        setDismissedReminders((prev) => new Set([...prev, jdHistoryId]))
+        fetchHistory()
+      } else {
+        alert('Có lỗi khi tạo bảng hỏi mới: ' + (data.error ?? ''))
+      }
+    } catch {
+      alert('Không kết nối được, thử lại nhé!')
+    } finally {
+      setResendingFor(null)
+    }
+  }
+
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
   return (
     <>
     <div className="min-h-screen bg-gray-50">
+      {/* 30-day reminder banners */}
+      {reminders
+        .filter((r) => !dismissedReminders.has(r.jd_history_id))
+        .map((r) => (
+          <div key={r.jd_history_id} className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
+            <div className="bg-white border border-amber-300 rounded-xl shadow-lg px-4 py-3 flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-gray-800">
+                  <span className="text-amber-500 mr-1">⏰</span>
+                  <span className="font-bold">{r.job_title}</span> — đã 1 tháng rồi, tuyển được chưa?
+                </p>
+                <button
+                  onClick={() => setDismissedReminders((prev) => new Set([...prev, r.jd_history_id]))}
+                  className="text-gray-400 hover:text-gray-600 shrink-0 text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleMarkHired(r.jd_history_id)}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
+                >
+                  ✓ Đã tuyển xong
+                </button>
+                <button
+                  onClick={() => handleResendQuestionnaire(r.jd_history_id)}
+                  disabled={resendingFor === r.jd_history_id}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {resendingFor === r.jd_history_id ? 'Đang tạo...' : '↻ Gửi bảng hỏi mới'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+
       {/* Answers ready banner */}
       {showAnswersReadyToast && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg">
@@ -257,27 +341,58 @@ export default function Home() {
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="font-semibold text-gray-700 text-sm">JD đã tạo</h2>
             </div>
-            <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+            <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
               {history.length === 0 ? (
                 <p className="px-4 py-6 text-sm text-gray-400 text-center">Chưa có JD nào</p>
               ) : (
-                history.map((item) => (
-                  <div key={item.id} className="flex items-center border-b border-gray-50 last:border-0">
-                    <button
-                      onClick={() => handleHistoryClick(item.id)}
-                      className="flex-1 text-left px-4 py-3 hover:bg-indigo-50 transition-colors"
-                    >
-                      <p className="font-medium text-sm text-gray-800 truncate">{item.job_title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.created_at)}</p>
-                    </button>
-                    <button
-                      onClick={() => { setPostingJdId(item.id); setShowHistory(false) }}
-                      className="px-3 py-1 mr-3 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 whitespace-nowrap"
-                    >
-                      Đăng tuyển
-                    </button>
-                  </div>
-                ))
+                <>
+                  {/* Active JDs */}
+                  {history.filter((h) => (h.status ?? 'active') === 'active').map((item) => (
+                    <div key={item.id} className="flex items-center border-b border-gray-50 last:border-0">
+                      <button
+                        onClick={() => handleHistoryClick(item.id)}
+                        className="flex-1 text-left px-4 py-3 hover:bg-indigo-50 transition-colors"
+                      >
+                        <p className="font-medium text-sm text-gray-800 truncate">{item.job_title}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.created_at)}</p>
+                      </button>
+                      <button
+                        onClick={() => { handleResendQuestionnaire(item.id); setShowHistory(false) }}
+                        disabled={resendingFor === item.id}
+                        className="px-2 py-1 mr-1 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+                      >
+                        {resendingFor === item.id ? '...' : '↻'}
+                      </button>
+                      <button
+                        onClick={() => { setPostingJdId(item.id); setShowHistory(false) }}
+                        className="px-3 py-1 mr-3 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 whitespace-nowrap"
+                      >
+                        Đăng tuyển
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Hired JDs */}
+                  {history.filter((h) => h.status === 'hired').length > 0 && (
+                    <>
+                      <div className="px-4 py-2 bg-gray-50">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Đã tuyển xong</p>
+                      </div>
+                      {history.filter((h) => h.status === 'hired').map((item) => (
+                        <div key={item.id} className="flex items-center opacity-60">
+                          <button
+                            onClick={() => handleHistoryClick(item.id)}
+                            className="flex-1 text-left px-4 py-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <p className="font-medium text-sm text-gray-800 truncate">{item.job_title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.created_at)}</p>
+                          </button>
+                          <span className="px-3 mr-3 text-xs text-green-600 font-medium">✓ Hired</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
               )}
             </div>
           </div>
