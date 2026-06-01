@@ -213,6 +213,20 @@ function buildAngleDirective(
   return directives[angle]
 }
 
+function buildAntiPatternBlock(): string {
+  return `
+---
+
+**TUYỆT ĐỐI KHÔNG:**
+- Mở đầu bằng: "Mình là HR/TA/Recruiter tại...", "Công ty X đang tìm kiếm...", "Chào mọi người..."
+- Dùng các cụm: "đội ngũ năng động", "môi trường chuyên nghiệp", "cơ hội phát triển không giới hạn", "work-life balance", "cùng nhau phát triển", "trẻ trung năng động", "môi trường thân thiện", "passionate", "dynamic team"
+- Dấu chấm than quá 2 lần trong toàn bài
+
+**BẮT BUỘC:**
+- 3 câu đầu KHÔNG được nhắc tên công ty hoặc tên vị trí tuyển dụng
+- Câu đầu tiên phải là: câu hỏi, một observation cụ thể, hoặc một tình huống/scenario thật`
+}
+
 function buildRecommendPrompt(jobTitle: string, jdText: string, questionnaireContext: string): string {
   return `Bạn là chuyên gia tuyển dụng. Phân tích JD và trả về JSON channel recommendation.
 
@@ -268,14 +282,31 @@ function buildGeneratePrompt(
   jdText: string,
   questionnaireContext: string,
   channel: string,
-  style: ContentStyle
+  style: ContentStyle,
+  persona: CandidatePersona,
+  storyAngle?: StoryAngle
 ): string {
+  const personaBlock = `
+**Ứng viên mục tiêu:**
+- Motivation: ${persona.motivation}
+- Barrier (lý do họ chưa apply): ${persona.barrier}
+- Trigger (điều gì đang xảy ra khiến họ tìm job): ${persona.trigger}
+
+Bài viết phải address barrier và khai thác trigger — không viết cho mọi người, viết cho đúng người này.`
+
+  const angleBlock =
+    style === 'story_telling' && storyAngle
+      ? `\n**Góc kể chuyện (bắt buộc theo):** ${buildAngleDirective(storyAngle, '', questionnaireContext)}`
+      : ''
+
   return `Bạn là chuyên gia content tuyển dụng. Viết nội dung post job cho kênh ${channel}.
 
 **Vị trí:** ${jobTitle}
 **JD:**
 ${jdText}
 ${questionnaireContext ? `\n**Thông tin bổ sung từ hiring manager:**\n${questionnaireContext}` : ''}
+${personaBlock}
+${angleBlock}
 
 ---
 
@@ -287,7 +318,8 @@ ${questionnaireContext ? `\n**Thông tin bổ sung từ hiring manager:**\n${que
 
 ---
 
-Chỉ trả về nội dung post, không giải thích, không markdown wrapper.`
+Chỉ trả về nội dung post, không giải thích, không markdown wrapper.
+${buildAntiPatternBlock()}`
 }
 
 export async function POST(req: NextRequest) {
