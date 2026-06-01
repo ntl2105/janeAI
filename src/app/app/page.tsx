@@ -221,13 +221,18 @@ export default function Home() {
   }
 
   async function handleMarkHired(jdHistoryId: string) {
-    await fetch(`/api/jd-history/${jdHistoryId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'hired' }),
-    })
-    setDismissedReminders((prev) => new Set([...prev, jdHistoryId]))
-    setHistory((prev) => prev.map((h) => h.id === jdHistoryId ? { ...h, status: 'hired' as const } : h))
+    try {
+      const res = await fetch(`/api/jd-history/${jdHistoryId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'hired' }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setDismissedReminders((prev) => new Set([...prev, jdHistoryId]))
+      setHistory((prev) => prev.map((h) => h.id === jdHistoryId ? { ...h, status: 'hired' as const } : h))
+    } catch {
+      alert('Không thể cập nhật trạng thái, thử lại nhé!')
+    }
   }
 
   async function handleResendQuestionnaire(jdHistoryId: string) {
@@ -263,41 +268,43 @@ export default function Home() {
     <>
     <div className="min-h-screen bg-gray-50">
       {/* 30-day reminder banners */}
-      {reminders
-        .filter((r) => !dismissedReminders.has(r.jd_history_id))
-        .map((r) => (
-          <div key={r.jd_history_id} className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
-            <div className="bg-white border border-amber-300 rounded-xl shadow-lg px-4 py-3 flex flex-col gap-2">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-gray-800">
-                  <span className="text-amber-500 mr-1">⏰</span>
-                  <span className="font-bold">{r.job_title}</span> — đã 1 tháng rồi, tuyển được chưa?
-                </p>
-                <button
-                  onClick={() => setDismissedReminders((prev) => new Set([...prev, r.jd_history_id]))}
-                  className="text-gray-400 hover:text-gray-600 shrink-0 text-lg leading-none"
-                >
-                  ×
-                </button>
+      {reminders.filter((r) => !dismissedReminders.has(r.jd_history_id)).length > 0 && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 flex flex-col gap-2">
+          {reminders
+            .filter((r) => !dismissedReminders.has(r.jd_history_id))
+            .map((r) => (
+              <div key={r.jd_history_id} className="bg-white border border-amber-300 rounded-xl shadow-lg px-4 py-3 flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-gray-800">
+                    <span className="text-amber-500 mr-1">⏰</span>
+                    <span className="font-bold">{r.job_title}</span> — đã 1 tháng rồi, tuyển được chưa?
+                  </p>
+                  <button
+                    onClick={() => setDismissedReminders((prev) => new Set([...prev, r.jd_history_id]))}
+                    className="text-gray-400 hover:text-gray-600 shrink-0 text-lg leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleMarkHired(r.jd_history_id)}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
+                  >
+                    ✓ Đã tuyển xong
+                  </button>
+                  <button
+                    onClick={() => handleResendQuestionnaire(r.jd_history_id)}
+                    disabled={resendingFor === r.jd_history_id}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {resendingFor === r.jd_history_id ? 'Đang tạo...' : '↻ Gửi bảng hỏi mới'}
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleMarkHired(r.jd_history_id)}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-700"
-                >
-                  ✓ Đã tuyển xong
-                </button>
-                <button
-                  onClick={() => handleResendQuestionnaire(r.jd_history_id)}
-                  disabled={resendingFor === r.jd_history_id}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {resendingFor === r.jd_history_id ? 'Đang tạo...' : '↻ Gửi bảng hỏi mới'}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
+        </div>
+      )}
 
       {/* Answers ready banner */}
       {showAnswersReadyToast && (
