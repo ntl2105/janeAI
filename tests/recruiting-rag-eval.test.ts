@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict'
+import { describe, it } from 'node:test'
+
+import {
+  evaluateRetrievalCases,
+  loadDefaultApprovedChunks,
+  retrievalEvalCases,
+} from '@/lib/recruiting-rag/evaluation'
+
+describe('offline recruiting RAG evaluation', () => {
+  it('loads the committed approved-public corpus with retrieval cards', () => {
+    const chunks = loadDefaultApprovedChunks()
+
+    assert.ok(chunks.length >= 500)
+    assert.ok(chunks.every((chunk) => chunk.riskLevel === 'approved_public'))
+    assert.ok(chunks.some((chunk) => chunk.embeddingText?.includes('candidate persona')))
+  })
+
+  it('passes the required golden retrieval cases', () => {
+    const results = evaluateRetrievalCases({
+      chunks: loadDefaultApprovedChunks(),
+      cases: retrievalEvalCases,
+      topK: 3,
+    })
+
+    assert.equal(results.every((result) => result.passed), true)
+  })
+})
