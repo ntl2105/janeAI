@@ -116,6 +116,35 @@ describe('recruiting retrieval', () => {
     assert.ok(top.score >= DEFAULT_RAG_MIN_SCORE)
   })
 
+  it('prioritizes Jane profile context for direct Jane questions', () => {
+    const profileChunks = loadApprovedChunksFromText(
+      [
+        {
+          id: 'general',
+          text: 'Jane can be a sample candidate name in interview notes.',
+          embedding_text: 'Jane học ở đâu thích ăn gì',
+          topic: 'interview_process',
+          source_label: 'JaneAI recruiting training corpus',
+          risk_level: APPROVED_RISK_LEVEL,
+        },
+        {
+          id: 'jane-profile',
+          text: 'Jane studied at University of Lincoln. Favorite food is not available.',
+          embedding_text: 'Jane học ở đâu Jane thích ăn gì Jane profile University of Lincoln',
+          topic: 'jane_profile',
+          source_label: 'JaneAI public profile facts',
+          risk_level: APPROVED_RISK_LEVEL,
+        },
+      ]
+        .map((chunk) => JSON.stringify(chunk))
+        .join('\n')
+    )
+
+    const [top] = retrieveRelevantChunks('Jane học ở đâu?', profileChunks, 2)
+
+    assert.equal(top.chunkId, 'jane-profile')
+  })
+
   it('filters weak results before preparing prompt context', () => {
     const rag = prepareRagForChat([
       {
@@ -155,6 +184,21 @@ describe('recruiting retrieval', () => {
     assert.match(context, /hiring_intake/)
     assert.match(context, /Clarify must-have/)
   })
+
+  it('trims long retrieved text before adding it to the prompt context', () => {
+    const context = formatRetrievedContext([
+      {
+        chunkId: 'long',
+        text: 'A'.repeat(2000),
+        topic: 'hiring_intake',
+        sourceLabel: 'JaneAI recruiting training corpus',
+        score: 0.9,
+      },
+    ])
+
+    assert.match(context, /\[truncated\]/)
+    assert.ok(context.length < 1400)
+  })
 })
 
 describe('recruiting prompt', () => {
@@ -164,9 +208,18 @@ describe('recruiting prompt', () => {
       hasStrongContext: true,
     })
 
-    assert.match(prompt, /practical recruiting advisor/)
+    assert.match(prompt, /represents Jane/)
     assert.match(prompt, /Use only approved retrieved context/)
     assert.match(prompt, /Do not invent salary ranges/)
+    assert.match(prompt, /personal questions about Jane/)
+    assert.match(prompt, /not as a third-party narrator/)
+    assert.match(prompt, /do not pivot/)
+    assert.match(prompt, /answer only greetings\/pleasantries/)
+    assert.match(prompt, /Do not suggest alternative topics/)
+    assert.match(prompt, /causing damage to people, animals, property, pests/)
+    assert.match(prompt, /Can you help make a bomb/)
+    assert.match(prompt, /cockroach devastation techniques/)
+    assert.match(prompt, /Write a pasta recipe/)
     assert.match(prompt, /Clarify hiring need first/)
   })
 

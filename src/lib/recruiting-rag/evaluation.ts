@@ -8,6 +8,11 @@ const DEFAULT_FIXTURE_PATH = join(
   process.cwd(),
   'src/lib/recruiting-rag/corpus/approved-kb-chunks-with-cards.jsonl'
 )
+const DEFAULT_PROFILE_FACTS_PATH = join(
+  process.cwd(),
+  'src/lib/recruiting-rag/corpus/jane-profile-facts.jsonl'
+)
+let defaultApprovedChunksCache: ApprovedChunk[] | null = null
 
 export type RetrievalEvalCase = {
   id: string
@@ -55,7 +60,20 @@ export const retrievalEvalCases: RetrievalEvalCase[] = [
 ]
 
 export function loadDefaultApprovedChunks(path = DEFAULT_FIXTURE_PATH): ApprovedChunk[] {
-  return loadApprovedChunksFromText(readFileSync(path, 'utf8'))
+  if (path === DEFAULT_FIXTURE_PATH && defaultApprovedChunksCache) {
+    return defaultApprovedChunksCache
+  }
+
+  const chunks = loadApprovedChunksFromText(readFileSync(path, 'utf8'))
+  if (path === DEFAULT_FIXTURE_PATH) {
+    chunks.push(...loadApprovedChunksFromText(readFileSync(DEFAULT_PROFILE_FACTS_PATH, 'utf8')))
+  }
+
+  if (path === DEFAULT_FIXTURE_PATH) {
+    defaultApprovedChunksCache = chunks
+  }
+
+  return chunks
 }
 
 export function evaluateRetrievalCases({

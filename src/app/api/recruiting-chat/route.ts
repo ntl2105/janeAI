@@ -44,6 +44,35 @@ function getMessageText(message: UIMessage): string {
     .trim()
 }
 
+function getEmailFromSessionClaims(sessionClaims: unknown): string | null {
+  if (!sessionClaims || typeof sessionClaims !== 'object') return null
+
+  const claims = sessionClaims as Record<string, unknown>
+  const candidates = [
+    claims.email,
+    claims.email_address,
+    claims.primary_email_address,
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.includes('@')) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+async function getCurrentUserEmailSafely(): Promise<string | null> {
+  try {
+    const user = await currentUser()
+    return user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses[0]?.emailAddress ?? null
+  } catch (error) {
+    console.error('Recruiting chat user email lookup failed:', error)
+    return null
+  }
+}
+
 async function getConversationIdSafely({
   conversationId,
   userEmail,
@@ -72,12 +101,11 @@ async function saveRecruitingChatMessageSafely(
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const user = await currentUser()
-  const userEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses[0]?.emailAddress ?? null
+  const userEmail = getEmailFromSessionClaims(sessionClaims) ?? (await getCurrentUserEmailSafely())
 
   const { allowed } = await checkRateLimitSafely(userId, 'recruiting-chat')
   if (!allowed) {
@@ -125,7 +153,7 @@ export async function POST(request: Request) {
     )
 
     const retrievalQuery = buildRetrievalQuery(messages as ChatTextMessage[])
-    const retrievedResults = retrieveRelevantChunks(retrievalQuery, loadDefaultApprovedChunks())
+    const retrievedResults = retrieveRelevantChunks(retrievalQuery, loadDefaultApprovedChunks(), 4)
     const rag = prepareRagForChat(retrievedResults)
 
     const result = streamText({

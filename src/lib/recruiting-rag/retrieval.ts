@@ -1,6 +1,7 @@
 import type { ApprovedChunk } from './approved-chunks'
 
 export const DEFAULT_RAG_MIN_SCORE = 0.2
+export const DEFAULT_RETRIEVED_TEXT_MAX_CHARS = 1200
 
 export type ChatTextMessage = {
   role: 'user' | 'assistant' | string
@@ -106,19 +107,35 @@ function tokenize(value: string): string[] {
     .filter((token) => token.length >= 2 && !STOP_WORDS.has(token))
 }
 
-function scoreChunk(query: string, chunk: ApprovedChunk): number {
-  const queryTokens = new Set(tokenize(query))
-  if (queryTokens.size === 0) return 0
+const tokenCache = new WeakMap<ApprovedChunk, Set<string>>()
+
+function chunkTokenSet(chunk: ApprovedChunk): Set<string> {
+  const cached = tokenCache.get(chunk)
+  if (cached) return cached
 
   const retrievalText = [chunk.embeddingText ?? chunk.text, chunk.topic].join('\n')
-  const chunkTokens = new Set(tokenize(retrievalText))
+  const tokens = new Set(tokenize(retrievalText))
+  tokenCache.set(chunk, tokens)
+  return tokens
+}
+
+function scoreChunk(queryTokens: Set<string>, chunk: ApprovedChunk): number {
+  if (queryTokens.size === 0) return 0
+
+  const chunkTokens = chunkTokenSet(chunk)
   let matches = 0
 
   for (const token of queryTokens) {
     if (chunkTokens.has(token)) matches += 1
   }
 
-  return matches / queryTokens.size
+  const profileBoost = queryTokens.has('jane') && chunk.topic === 'jane_profile' ? 2 : 0
+  return matches / queryTokens.size + profileBoost
+}
+
+function truncateRetrievedText(text: string, maxChars = DEFAULT_RETRIEVED_TEXT_MAX_CHARS): string {
+  if (text.length <= maxChars) return text
+  return `${text.slice(0, maxChars).trimEnd()}\n[truncated]`
 }
 
 export function retrieveRelevantChunks(
@@ -126,13 +143,15 @@ export function retrieveRelevantChunks(
   chunks: ApprovedChunk[],
   topK = 6
 ): RetrievalResult[] {
+  const queryTokens = new Set(tokenize(query))
+
   return chunks
     .map((chunk) => ({
       chunkId: chunk.id,
       text: chunk.text,
       topic: chunk.topic,
       sourceLabel: chunk.sourceLabel,
-      score: scoreChunk(query, chunk),
+      score: scoreChunk(queryTokens, chunk),
     }))
     .filter((result) => result.score > 0)
     .sort((a, b) => b.score - a.score || a.chunkId.localeCompare(b.chunkId))
@@ -147,7 +166,7 @@ export function formatRetrievedContext(results: RetrievalResult[]): string {
         `Topic: ${result.topic}`,
         `Source: ${result.sourceLabel}`,
         `Score: ${result.score.toFixed(3)}`,
-        `Text: ${result.text}`,
+        `Text: ${truncateRetrievedText(result.text)}`,
       ].join('\n')
     )
     .join('\n\n')

@@ -126,6 +126,9 @@ export default function RecruitingChatPanel() {
 
   const isStreaming = status === 'submitted' || status === 'streaming'
   const unread = messages.length > 0 && !open
+  const visibleMessages = messages
+    .map((message) => ({ message, text: textFromMessage(message) }))
+    .filter(({ message, text }) => message.role !== 'assistant' || text.trim().length > 0)
 
   async function handleSend() {
     const text = input.trim()
@@ -185,7 +188,12 @@ export default function RecruitingChatPanel() {
         <div className="fixed bottom-5 right-5 z-50 flex h-[min(680px,calc(100vh-40px))] w-[min(420px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
           <div className="flex items-start justify-between gap-4 border-b border-gray-100 bg-[#1B2B6E] px-4 py-4 text-white">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">Chat với Jane AI</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">
+                Chat với{' '}
+                <span className="bg-gradient-to-r from-emerald-200 via-sky-200 to-fuchsia-200 bg-clip-text text-transparent">
+                  Jane AI
+                </span>
+              </p>
               <h2 className="text-base font-semibold leading-tight">Có thắc mắc gì chưa giải quyết được?</h2>
               <p className="mt-1 text-xs text-white/70">
                 Hỏi thẳng mình nè.
@@ -201,7 +209,7 @@ export default function RecruitingChatPanel() {
           </div>
 
           <div className="flex-1 overflow-y-auto bg-gray-50 p-3 space-y-3">
-            {messages.length === 0 ? (
+            {visibleMessages.length === 0 ? (
               <div className="space-y-3">
                 <div className="mr-8 rounded-xl border border-gray-100 bg-white px-3 py-3 text-sm text-gray-700">
                   <p className="font-semibold text-gray-900">Hello!</p>
@@ -225,7 +233,7 @@ export default function RecruitingChatPanel() {
                 ))}
               </div>
             ) : (
-              messages.map((message) => (
+              visibleMessages.map(({ message, text }) => (
                 <div
                   key={message.id}
                   className={`rounded-xl px-3 py-2 text-sm ${
@@ -235,9 +243,9 @@ export default function RecruitingChatPanel() {
                   }`}
                 >
                   {message.role === 'assistant' ? (
-                    <AssistantMarkdown text={textFromMessage(message)} />
+                    <AssistantMarkdown text={text} />
                   ) : (
-                    textFromMessage(message)
+                    text
                   )}
                 </div>
               ))
