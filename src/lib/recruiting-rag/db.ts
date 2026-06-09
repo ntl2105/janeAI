@@ -58,6 +58,12 @@ export async function getOrCreateRecruitingConversation({
 export async function saveRecruitingChatMessage(input: RecruitingChatMessageInsert) {
   const { error } = await (db().from('recruiting_chat_messages') as any).insert(input) // eslint-disable-line @typescript-eslint/no-explicit-any
   if (error) throw error
+
+  const { error: updateError } = await (db().from('recruiting_chat_conversations') as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', input.conversation_id)
+
+  if (updateError) throw updateError
 }
 
 export async function saveRecruitingLead({
